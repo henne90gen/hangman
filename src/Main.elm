@@ -15,6 +15,10 @@ import TypedSvg.Types exposing (Paint(..), px)
 import WordList exposing (wordList)
 
 
+
+-- Wort aufdecken, wenn man verliert
+
+
 type Letter
     = Shown Char
     | Hidden Char
@@ -57,14 +61,18 @@ generateRandomNumber =
     Random.generate NewRandomNumber (Random.int 0 (List.length wordList - 1))
 
 
-createAlphabet : String -> List AlphabetLetter
-createAlphabet str =
-    List.map createAlphabetLetter (String.toList str)
+createAlphabet : String -> Char -> List AlphabetLetter
+createAlphabet str firstLetter =
+    List.map (createAlphabetLetter firstLetter) (String.toList str)
 
 
-createAlphabetLetter : Char -> AlphabetLetter
-createAlphabetLetter c =
-    Unused c
+createAlphabetLetter : Char -> Char -> AlphabetLetter
+createAlphabetLetter firstLetter c =
+    if firstLetter == c then
+        Used c
+
+    else
+        Unused c
 
 
 main : Program () Model Msg
@@ -96,16 +104,30 @@ update msg model =
 
 startNewGame : String -> Model
 startNewGame newWord =
-    { shownWord = List.map toLetter (String.toList newWord)
-    , alphabet = createAlphabet "abcdefghijklmnopqrstuvwxyzäöüß"
+    let
+        characters =
+            String.toList newWord
+
+        firstLetter =
+            Char.toLower (Maybe.withDefault ' ' (List.head characters))
+    in
+    { shownWord = List.indexedMap (toLetter firstLetter) characters
+    , alphabet = createAlphabet "abcdefghijklmnopqrstuvwxyzäöüß" firstLetter
     , errorCounter = 0
     , gameState = Playing
     }
 
 
-toLetter : Char -> Letter
-toLetter c =
-    Hidden c
+toLetter : Char -> Int -> Char -> Letter
+toLetter firstLetter index c =
+    if index == 0 then
+        Shown c
+
+    else if firstLetter == c then
+        Shown c
+
+    else
+        Hidden c
 
 
 guessLetter : Model -> Char -> Model
@@ -234,7 +256,7 @@ view model =
     , body =
         [ viewNewGame
         , viewAlphabet model.alphabet model.gameState
-        , viewWord model.shownWord
+        , viewWord model.shownWord model.gameState
         , viewErrorCounter model.errorCounter
         , viewHasWon model.gameState
         ]
@@ -323,23 +345,31 @@ getClassesForAlphabetLetterButton disabled_ =
         []
 
 
-viewWord : List Letter -> Html msg
-viewWord letters =
+viewWord : List Letter -> GameState -> Html msg
+viewWord letters gameState =
     div
         [ class "text-4xl"
         , class "m-5"
         ]
-        (List.map viewLetter letters)
+        (List.map (viewLetter gameState) letters)
 
 
-viewLetter : Letter -> Html msg
-viewLetter letter =
+viewLetter : GameState -> Letter -> Html msg
+viewLetter gameState letter =
+    let
+        gameOver =
+            isGameOver gameState
+    in
     case letter of
         Shown c ->
             text (String.fromList [ c ])
 
-        Hidden _ ->
-            text "_"
+        Hidden c ->
+            if gameOver then
+                text (String.fromList [ c ])
+
+            else
+                text " _ "
 
 
 viewErrorCounter : Int -> Html msg
