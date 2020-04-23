@@ -6,10 +6,13 @@ import Html exposing (Html, button, div, text)
 import Html.Attributes exposing (class, disabled)
 import Html.Events exposing (onClick)
 import List
+import List.Extra
+import Random
 import TypedSvg exposing (circle, g, line, svg)
 import TypedSvg.Attributes exposing (cx, cy, height, r, stroke, strokeWidth, viewBox, width, x1, x2, y1, y2)
 import TypedSvg.Core exposing (Svg)
 import TypedSvg.Types exposing (Paint(..), px)
+import WordList exposing (wordList)
 
 
 type Letter
@@ -38,14 +41,20 @@ type alias Model =
 
 type Msg
     = NewGame
+    | NewRandomNumber Int
     | GuessLetter Char
 
 
-init : flags -> ( Model, Cmd msg )
+init : flags -> ( Model, Cmd Msg )
 init _ =
-    ( startNewGame
-    , Cmd.none
+    ( startNewGame ""
+    , generateRandomNumber
     )
+
+
+generateRandomNumber : Cmd Msg
+generateRandomNumber =
+    Random.generate NewRandomNumber (Random.int 0 (List.length wordList - 1))
 
 
 createAlphabet : String -> List AlphabetLetter
@@ -72,18 +81,21 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         NewGame ->
-            ( startNewGame, Cmd.none )
+            ( startNewGame "", generateRandomNumber )
+
+        NewRandomNumber num ->
+            let
+                newWord =
+                    Maybe.withDefault "" (List.Extra.getAt num wordList)
+            in
+            ( startNewGame newWord, Cmd.none )
 
         GuessLetter letter ->
             ( guessLetter model letter, Cmd.none )
 
 
-startNewGame : Model
-startNewGame =
-    let
-        newWord =
-            "cookie"
-    in
+startNewGame : String -> Model
+startNewGame newWord =
     { shownWord = List.map toLetter (String.toList newWord)
     , alphabet = createAlphabet "abcdefghijklmnopqrstuvwxyzäöüß"
     , errorCounter = 0
