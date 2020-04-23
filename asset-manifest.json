@@ -1,15 +1,15 @@
 {
-  "main.css": "/static/css/main.d5300901.chunk.css",
-  "main.js": "/static/js/main.2c746743.chunk.js",
-  "main.js.map": "/static/js/main.2c746743.chunk.js.map",
-  "runtime~main.js": "/static/js/runtime~main.1b922744.js",
-  "runtime~main.js.map": "/static/js/runtime~main.1b922744.js.map",
-  "vendors~main.js": "/static/js/vendors~main.83d36ed1.chunk.js",
-  "vendors~main.js.map": "/static/js/vendors~main.83d36ed1.chunk.js.map",
-  "./service-worker.js": "/./service-worker.js",
-  "favicon.ico": "/favicon.ico",
-  "index.html": "/index.html",
-  "logo.svg": "/logo.svg",
-  "manifest.json": "/manifest.json",
-  "precache-manifest.1c6714aa6569f79e81655bb267c4c3ed.js": "/precache-manifest.1c6714aa6569f79e81655bb267c4c3ed.js"
+  "main.css": "/hangman/static/css/main.d5300901.chunk.css",
+  "main.js": "/hangman/static/js/main.797cee1d.chunk.js",
+  "main.js.map": "/hangman/static/js/main.797cee1d.chunk.js.map",
+  "runtime~main.js": "/hangman/static/js/runtime~main.777ea511.js",
+  "runtime~main.js.map": "/hangman/static/js/runtime~main.777ea511.js.map",
+  "vendors~main.js": "/hangman/static/js/vendors~main.83d36ed1.chunk.js",
+  "vendors~main.js.map": "/hangman/static/js/vendors~main.83d36ed1.chunk.js.map",
+  "./service-worker.js": "/hangman/./service-worker.js",
+  "favicon.ico": "/hangman/favicon.ico",
+  "index.html": "/hangman/index.html",
+  "logo.svg": "/hangman/logo.svg",
+  "manifest.json": "/hangman/manifest.json",
+  "precache-manifest.656f45b03019eeeec3900aec4299709a.js": "/hangman/precache-manifest.656f45b03019eeeec3900aec4299709a.js"
 }
