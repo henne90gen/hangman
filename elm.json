@@ -3,6 +3,7 @@
     "source-directories": [
         "src"
     ],
+    "homepage": "https://henne90gen.github.io/hangman/",
     "elm-version": "0.19.1",
     "dependencies": {
         "direct": {
