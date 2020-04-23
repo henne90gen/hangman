@@ -12,11 +12,12 @@ import TypedSvg exposing (circle, g, line, svg)
 import TypedSvg.Attributes exposing (cx, cy, height, r, stroke, strokeWidth, viewBox, width, x1, x2, y1, y2)
 import TypedSvg.Core exposing (Svg)
 import TypedSvg.Types exposing (Paint(..), px)
-import WordList exposing (wordList)
+import WordList exposing (wordList_de, wordList_en)
 
 
-
--- Wort aufdecken, wenn man verliert
+type Language
+    = DE
+    | EN
 
 
 type Letter
@@ -40,6 +41,7 @@ type alias Model =
     , alphabet : List AlphabetLetter
     , errorCounter : Int
     , gameState : GameState
+    , language : Language
     }
 
 
@@ -47,17 +49,22 @@ type Msg
     = NewGame
     | NewRandomNumber Int
     | GuessLetter Char
+    | ChangeLanguage Language
 
 
 init : flags -> ( Model, Cmd Msg )
 init _ =
-    ( startNewGame ""
-    , generateRandomNumber
+    ( startNewGame DE ""
+    , generateRandomNumber DE
     )
 
 
-generateRandomNumber : Cmd Msg
-generateRandomNumber =
+generateRandomNumber : Language -> Cmd Msg
+generateRandomNumber language =
+    let
+        wordList =
+            getWordList language
+    in
     Random.generate NewRandomNumber (Random.int 0 (List.length wordList - 1))
 
 
@@ -89,21 +96,37 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         NewGame ->
-            ( startNewGame "", generateRandomNumber )
+            ( startNewGame model.language "", generateRandomNumber model.language )
 
         NewRandomNumber num ->
             let
+                wordList =
+                    getWordList model.language
+
                 newWord =
                     Maybe.withDefault "" (List.Extra.getAt num wordList)
             in
-            ( startNewGame newWord, Cmd.none )
+            ( startNewGame model.language newWord, Cmd.none )
 
         GuessLetter letter ->
             ( guessLetter model letter, Cmd.none )
 
+        ChangeLanguage newLanguage ->
+            ( startNewGame newLanguage "", generateRandomNumber newLanguage )
 
-startNewGame : String -> Model
-startNewGame newWord =
+
+getWordList : Language -> List String
+getWordList language =
+    case language of
+        DE ->
+            wordList_de
+
+        EN ->
+            wordList_en
+
+
+startNewGame : Language -> String -> Model
+startNewGame language newWord =
     let
         characters =
             String.toList newWord
@@ -115,6 +138,7 @@ startNewGame newWord =
     , alphabet = createAlphabet "abcdefghijklmnopqrstuvwxyzäöüß" firstLetter
     , errorCounter = 0
     , gameState = Playing
+    , language = language
     }
 
 
@@ -146,6 +170,7 @@ guessLetter model c =
     , alphabet = guessLetterAlphabet model.alphabet c
     , errorCounter = newErrorCounter
     , gameState = gameState
+    , language = model.language
     }
 
 
@@ -255,6 +280,7 @@ view model =
     { title = "Hangman"
     , body =
         [ viewNewGame
+        , viewLanguageSelect model.language
         , viewAlphabet model.alphabet model.gameState
         , viewWord model.shownWord model.gameState
         , viewErrorCounter model.errorCounter
@@ -275,6 +301,11 @@ viewNewGame =
         , class "m-5"
         ]
         [ text "Start New Game" ]
+
+
+viewLanguageSelect : Language -> Html Msg
+viewLanguageSelect language =
+    div [] []
 
 
 viewAlphabet : List AlphabetLetter -> GameState -> Html Msg
