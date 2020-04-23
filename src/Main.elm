@@ -7,7 +7,7 @@ import Html.Attributes exposing (class, disabled)
 import Html.Events exposing (onClick)
 import List
 import TypedSvg exposing (circle, g, line, svg)
-import TypedSvg.Attributes exposing (cx, cy, r, stroke, strokeWidth, viewBox, x1, x2, y1, y2)
+import TypedSvg.Attributes exposing (cx, cy, height, r, stroke, strokeWidth, viewBox, width, x1, x2, y1, y2)
 import TypedSvg.Core exposing (Svg)
 import TypedSvg.Types exposing (Paint(..), px)
 
@@ -22,11 +22,17 @@ type AlphabetLetter
     | Unused Char
 
 
+type GameState
+    = Playing
+    | HasWon
+    | HasLost
+
+
 type alias Model =
     { shownWord : List Letter
     , alphabet : List AlphabetLetter
     , errorCounter : Int
-    , hasWon : Bool
+    , gameState : GameState
     }
 
 
@@ -81,7 +87,7 @@ startNewGame =
     { shownWord = List.map toLetter (String.toList newWord)
     , alphabet = createAlphabet "abcdefghijklmnopqrstuvwxyzäöüß"
     , errorCounter = 0
-    , hasWon = False
+    , gameState = Playing
     }
 
 
@@ -96,13 +102,16 @@ guessLetter model c =
         ( hasFoundLetter, newShownWord ) =
             guessLetterShownWord model.shownWord c
 
-        hasWon =
-            checkForWin newShownWord
+        newErrorCounter =
+            updateErrorCounter model.errorCounter hasFoundLetter
+
+        gameState =
+            checkGameState model.gameState newShownWord newErrorCounter
     in
     { shownWord = newShownWord
     , alphabet = guessLetterAlphabet model.alphabet c
-    , errorCounter = updateErrorCounter model.errorCounter hasFoundLetter
-    , hasWon = hasWon
+    , errorCounter = newErrorCounter
+    , gameState = gameState
     }
 
 
@@ -154,11 +163,33 @@ guessSingleLetterAlphabet c letter =
                 Unused a
 
 
-checkForWin : List Letter -> Bool
-checkForWin word =
-    word
-        |> List.map checkForWinLetter
-        |> List.foldl (&&) True
+checkGameState : GameState -> List Letter -> Int -> GameState
+checkGameState gameState word errorCounter =
+    case gameState of
+        Playing ->
+            let
+                hasLost =
+                    errorCounter >= 10
+
+                hasWon =
+                    word
+                        |> List.map checkForWinLetter
+                        |> List.foldl (&&) True
+            in
+            if hasLost then
+                HasLost
+
+            else if hasWon then
+                HasWon
+
+            else
+                Playing
+
+        HasWon ->
+            HasWon
+
+        HasLost ->
+            HasLost
 
 
 checkForWinLetter : Letter -> Bool
@@ -190,10 +221,10 @@ view model =
     { title = "Hangman"
     , body =
         [ viewNewGame
-        , viewAlphabet model.alphabet model.hasWon
+        , viewAlphabet model.alphabet model.gameState
         , viewWord model.shownWord
         , viewErrorCounter model.errorCounter
-        , viewHasWon model.hasWon
+        , viewHasWon model.gameState
         ]
     }
 
@@ -212,8 +243,8 @@ viewNewGame =
         [ text "Start New Game" ]
 
 
-viewAlphabet : List AlphabetLetter -> Bool -> Html Msg
-viewAlphabet alphabet hasWon =
+viewAlphabet : List AlphabetLetter -> GameState -> Html Msg
+viewAlphabet alphabet gameState =
     div
         [ class "flex"
         , class "items-center"
@@ -222,19 +253,32 @@ viewAlphabet alphabet hasWon =
         , div
             [ class "flex-1"
             ]
-            (List.map (viewAlphabetLetter hasWon) alphabet)
+            (List.map (viewAlphabetLetter gameState) alphabet)
         , div [ class "flex-1" ] []
         ]
 
 
-viewAlphabetLetter : Bool -> AlphabetLetter -> Html Msg
-viewAlphabetLetter hasWon letter =
+viewAlphabetLetter : GameState -> AlphabetLetter -> Html Msg
+viewAlphabetLetter gameState letter =
     case letter of
         Used c ->
             viewAlphabetLetterButton c True
 
         Unused c ->
-            viewAlphabetLetterButton c (False || hasWon)
+            viewAlphabetLetterButton c (False || isGameOver gameState)
+
+
+isGameOver : GameState -> Bool
+isGameOver gameState =
+    case gameState of
+        Playing ->
+            False
+
+        HasLost ->
+            True
+
+        HasWon ->
+            True
 
 
 viewAlphabetLetterButton : Char -> Bool -> Html Msg
@@ -288,9 +332,12 @@ viewLetter letter =
 
 viewErrorCounter : Int -> Html msg
 viewErrorCounter counter =
-    div []
-        [ text (String.fromInt counter)
-        , viewHangman counter
+    div
+        [ class "flex"
+        , class "flex-col"
+        , class "items-center"
+        ]
+        [ div [ class "flex-1" ] [ viewHangman counter ]
         ]
 
 
@@ -300,7 +347,12 @@ viewHangman counter =
         temp =
             List.range 0 (counter - 1)
     in
-    svg [ viewBox 0 0 100 100 ] (List.map viewHangmanLine temp)
+    svg
+        [ viewBox 0 0 40 40
+        , width (px 400)
+        , height (px 400)
+        ]
+        (List.map viewHangmanLine temp)
 
 
 viewHangmanLine : Int -> Svg msg
@@ -463,10 +515,14 @@ viewHangmanLine index =
         line [] []
 
 
-viewHasWon : Bool -> Html msg
-viewHasWon hasWon =
-    if hasWon then
-        div [] [ text "You have won!" ]
+viewHasWon : GameState -> Html msg
+viewHasWon gameState =
+    case gameState of
+        Playing ->
+            div [] []
 
-    else
-        div [] []
+        HasWon ->
+            div [ class "mt-5" ] [ text "You have won!" ]
+
+        HasLost ->
+            div [ class "mt-5" ] [ text "You have lost!" ]
