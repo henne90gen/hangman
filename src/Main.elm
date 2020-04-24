@@ -2,8 +2,8 @@ module Main exposing (main)
 
 import Browser
 import Color
-import Html exposing (Html, button, div, text)
-import Html.Attributes exposing (class, disabled)
+import Html exposing (Html, button, div, option, select, text)
+import Html.Attributes exposing (class, disabled, value)
 import Html.Events exposing (onClick)
 import List
 import List.Extra
@@ -280,7 +280,7 @@ view model =
     { title = "Hangman"
     , body =
         [ viewNewGame
-        , viewLanguageSelect model.language
+        , viewLanguageSelect
         , viewAlphabet model.alphabet model.gameState
         , viewWord model.shownWord model.gameState
         , viewErrorCounter model.errorCounter
@@ -303,9 +303,25 @@ viewNewGame =
         [ text "Start New Game" ]
 
 
-viewLanguageSelect : Language -> Html Msg
-viewLanguageSelect language =
-    div [] []
+viewLanguageSelect : Html Msg
+viewLanguageSelect =
+    select
+        [ class "appearance-none"
+        , class "bg-gray-200"
+        , class "border"
+        , class "border-gray-200"
+        , class "text-gray-700"
+        , class "py-3"
+        , class "px-4"
+        , class "rounded"
+        , class "leading-tight"
+        , class "focus:outline-none"
+        , class "focus:bg-white"
+        , class "focus:border-gray-500"
+        ]
+        [ option [ onClick (ChangeLanguage DE) ] [ text "DE" ]
+        , option [ onClick (ChangeLanguage EN) ] [ text "EN" ]
+        ]
 
 
 viewAlphabet : List AlphabetLetter -> GameState -> Html Msg
