@@ -279,18 +279,18 @@ view : Model -> Browser.Document Msg
 view model =
     { title = "Hangman"
     , body =
-        [ viewNewGame
+        [ viewNewGame model.language
         , viewLanguageSelect
         , viewAlphabet model.alphabet model.gameState
         , viewWord model.shownWord model.gameState
         , viewErrorCounter model.errorCounter
-        , viewHasWon model.gameState
+        , viewHasWon model.gameState model.language
         ]
     }
 
 
-viewNewGame : Html Msg
-viewNewGame =
+viewNewGame : Language -> Html Msg
+viewNewGame language =
     button
         [ onClick NewGame
         , class "px-4"
@@ -300,7 +300,17 @@ viewNewGame =
         , class "text-white"
         , class "m-5"
         ]
-        [ text "Start New Game" ]
+        [ text (getNewGameText language) ]
+
+
+getNewGameText : Language -> String
+getNewGameText language =
+    case language of
+        DE ->
+            "Neues Spiel starten"
+
+        EN ->
+            "Start New Game"
 
 
 viewLanguageSelect : Html Msg
@@ -604,14 +614,34 @@ viewHangmanLine index =
         line [] []
 
 
-viewHasWon : GameState -> Html msg
-viewHasWon gameState =
+viewHasWon : GameState -> Language -> Html msg
+viewHasWon gameState language =
     case gameState of
         Playing ->
             div [] []
 
         HasWon ->
-            div [ class "mt-5" ] [ text "You have won!" ]
+            div [ class "mt-5" ] [ text (getWonText language) ]
 
         HasLost ->
-            div [ class "mt-5" ] [ text "You have lost!" ]
+            div [ class "mt-5" ] [ text (getLostText language) ]
+
+
+getWonText : Language -> String
+getWonText language =
+    case language of
+        DE ->
+            "Du hast gewonnen!"
+
+        EN ->
+            "You have won!"
+
+
+getLostText : Language -> String
+getLostText language =
+    case language of
+        DE ->
+            "Du hast verloren!"
+
+        EN ->
+            "You have lost!"
