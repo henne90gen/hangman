@@ -3,7 +3,7 @@ module Main exposing (main)
 import Browser
 import Color
 import Html exposing (Html, button, div, option, select, text)
-import Html.Attributes exposing (class, disabled, value)
+import Html.Attributes exposing (class, disabled)
 import Html.Events exposing (onClick)
 import List
 import List.Extra
