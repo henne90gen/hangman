@@ -26,7 +26,9 @@ type Letter
 
 
 type AlphabetLetter
-    = Used Char
+    = CorrectlyUsed Char
+    | IncorrectlyUsed Char
+    | Disabled Char
     | Unused Char
 
 
@@ -76,7 +78,7 @@ createAlphabet str firstLetter =
 createAlphabetLetter : Char -> Char -> AlphabetLetter
 createAlphabetLetter firstLetter c =
     if firstLetter == c then
-        Used c
+        CorrectlyUsed c
 
     else
         Unused c
@@ -167,7 +169,7 @@ guessLetter model c =
             checkGameState model.gameState newShownWord newErrorCounter
     in
     { shownWord = newShownWord
-    , alphabet = guessLetterAlphabet model.alphabet c
+    , alphabet = guessLetterAlphabet model.alphabet c hasFoundLetter gameState
     , errorCounter = newErrorCounter
     , gameState = gameState
     , language = model.language
@@ -203,20 +205,55 @@ matchLetter matchChar letter =
             ( False, Shown c )
 
 
-guessLetterAlphabet : List AlphabetLetter -> Char -> List AlphabetLetter
-guessLetterAlphabet alphabet c =
-    List.map (guessSingleLetterAlphabet c) alphabet
+guessLetterAlphabet : List AlphabetLetter -> Char -> Bool -> GameState -> List AlphabetLetter
+guessLetterAlphabet alphabet c hasFoundLetter gameState =
+    List.map (guessSingleLetterAlphabet c hasFoundLetter gameState) alphabet
 
 
-guessSingleLetterAlphabet : Char -> AlphabetLetter -> AlphabetLetter
-guessSingleLetterAlphabet c letter =
+guessSingleLetterAlphabet : Char -> Bool -> GameState -> AlphabetLetter -> AlphabetLetter
+guessSingleLetterAlphabet c hasFoundLetter gameState letter =
+    if isGameOver gameState then
+        guessLetterGameOver letter
+
+    else
+        guessLetterGameRunning c hasFoundLetter letter
+
+
+guessLetterGameOver : AlphabetLetter -> AlphabetLetter
+guessLetterGameOver letter =
     case letter of
-        Used a ->
-            Used a
+        CorrectlyUsed a ->
+            Disabled a
+
+        IncorrectlyUsed a ->
+            Disabled a
+
+        Disabled a ->
+            Disabled a
+
+        Unused a ->
+            Disabled a
+
+
+guessLetterGameRunning : Char -> Bool -> AlphabetLetter -> AlphabetLetter
+guessLetterGameRunning c hasFoundLetter letter =
+    case letter of
+        CorrectlyUsed a ->
+            CorrectlyUsed a
+
+        IncorrectlyUsed a ->
+            IncorrectlyUsed a
+
+        Disabled a ->
+            Disabled a
 
         Unused a ->
             if a == c then
-                Used a
+                if hasFoundLetter then
+                    CorrectlyUsed a
+
+                else
+                    IncorrectlyUsed a
 
             else
                 Unused a
@@ -279,12 +316,14 @@ view : Model -> Browser.Document Msg
 view model =
     { title = "Hangman"
     , body =
-        [ viewNewGame model.language
-        , viewLanguageSelect
-        , viewAlphabet model.alphabet model.gameState
+        [ div [ class "my-2" ]
+            [ viewNewGame model.language
+            , viewLanguageSelect
+            ]
         , viewWord model.shownWord model.gameState
-        , viewErrorCounter model.errorCounter
+        , viewAlphabet model.alphabet
         , viewHasWon model.gameState model.language
+        , viewHangman model.errorCounter
         ]
     }
 
@@ -298,7 +337,7 @@ viewNewGame language =
         , class "bg-blue-700"
         , class "rounded"
         , class "text-white"
-        , class "m-5"
+        , class "mx-5"
         ]
         [ text (getNewGameText language) ]
 
@@ -334,49 +373,26 @@ viewLanguageSelect =
         ]
 
 
-viewAlphabet : List AlphabetLetter -> GameState -> Html Msg
-viewAlphabet alphabet gameState =
+viewAlphabet : List AlphabetLetter -> Html Msg
+viewAlphabet alphabet =
     div
         [ class "flex"
         , class "items-center"
+        , class "mx-5"
+        , class "mb-3"
         ]
-        [ div [ class "flex-1" ] []
-        , div
+        [ div
             [ class "flex-1"
             ]
-            (List.map (viewAlphabetLetter gameState) alphabet)
-        , div [ class "flex-1" ] []
+            (List.map viewAlphabetLetter alphabet)
         ]
 
 
-viewAlphabetLetter : GameState -> AlphabetLetter -> Html Msg
-viewAlphabetLetter gameState letter =
-    case letter of
-        Used c ->
-            viewAlphabetLetterButton c True
-
-        Unused c ->
-            viewAlphabetLetterButton c (False || isGameOver gameState)
-
-
-isGameOver : GameState -> Bool
-isGameOver gameState =
-    case gameState of
-        Playing ->
-            False
-
-        HasLost ->
-            True
-
-        HasWon ->
-            True
-
-
-viewAlphabetLetterButton : Char -> Bool -> Html Msg
-viewAlphabetLetterButton c disabled_ =
+viewAlphabetLetter : AlphabetLetter -> Html Msg
+viewAlphabetLetter letter =
     let
-        classes =
-            getClassesForAlphabetLetterButton disabled_
+        ( classes, disabled_, c ) =
+            getClassesAndDisabledForAlphabetLetterButton letter
     in
     button
         ([ onClick (GuessLetter c)
@@ -384,8 +400,7 @@ viewAlphabetLetterButton c disabled_ =
          , class "px-4"
          , class "py-2"
          , class "bg-gray-300"
-         , class "mt-1"
-         , class "mb-1"
+         , class "my-1"
          ]
             ++ classes
         )
@@ -393,22 +408,52 @@ viewAlphabetLetterButton c disabled_ =
         ]
 
 
-getClassesForAlphabetLetterButton : Bool -> List (Html.Attribute msg)
-getClassesForAlphabetLetterButton disabled_ =
-    if disabled_ then
-        [ class "opacity-50", class "cursor-not-allowed" ]
+getClassesAndDisabledForAlphabetLetterButton : AlphabetLetter -> ( List (Html.Attribute msg), Bool, Char )
+getClassesAndDisabledForAlphabetLetterButton letter =
+    case letter of
+        Unused c ->
+            ( [], False, c )
 
-    else
-        []
+        CorrectlyUsed c ->
+            ( [ class "opacity-50", class "cursor-not-allowed", class "bg-green-200" ], True, c )
+
+        IncorrectlyUsed c ->
+            ( [ class "opacity-50", class "cursor-not-allowed", class "bg-red-300" ], True, c )
+
+        Disabled c ->
+            ( [ class "opacity-50", class "cursor-not-allowed" ], True, c )
 
 
 viewWord : List Letter -> GameState -> Html msg
 viewWord letters gameState =
+    let
+        classes =
+            getWordClasses gameState
+    in
     div
-        [ class "text-4xl"
-        , class "m-5"
-        ]
+        ([ class "text-4xl"
+         , class "m-5"
+         , class "mt-0"
+         , class "mb-2"
+         , class "pt-2"
+         , class "rounded"
+         ]
+            ++ classes
+        )
         (List.map (viewLetter gameState) letters)
+
+
+getWordClasses : GameState -> List (Html.Attribute msg)
+getWordClasses gameState =
+    case gameState of
+        Playing ->
+            []
+
+        HasWon ->
+            [ class "bg-green-200" ]
+
+        HasLost ->
+            [ class "bg-red-200" ]
 
 
 viewLetter : GameState -> Letter -> Html msg
@@ -429,19 +474,32 @@ viewLetter gameState letter =
                 text " _ "
 
 
-viewErrorCounter : Int -> Html msg
-viewErrorCounter counter =
+isGameOver : GameState -> Bool
+isGameOver gameState =
+    case gameState of
+        Playing ->
+            False
+
+        HasLost ->
+            True
+
+        HasWon ->
+            True
+
+
+viewHangman : Int -> Html msg
+viewHangman counter =
     div
         [ class "flex"
         , class "flex-col"
         , class "items-center"
         ]
-        [ div [ class "flex-1" ] [ viewHangman counter ]
+        [ div [ class "flex-1" ] [ viewHangmanSvg counter ]
         ]
 
 
-viewHangman : Int -> Html msg
-viewHangman counter =
+viewHangmanSvg : Int -> Html msg
+viewHangmanSvg counter =
     let
         temp =
             List.range 0 (counter - 1)
@@ -621,10 +679,10 @@ viewHasWon gameState language =
             div [] []
 
         HasWon ->
-            div [ class "mt-5" ] [ text (getWonText language) ]
+            div [ class "my-3" ] [ text (getWonText language) ]
 
         HasLost ->
-            div [ class "mt-5" ] [ text (getLostText language) ]
+            div [ class "my-3" ] [ text (getLostText language) ]
 
 
 getWonText : Language -> String
