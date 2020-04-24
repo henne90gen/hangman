@@ -9,6 +9,7 @@
   "./service-worker.js": "/hangman/./service-worker.js",
   "favicon.ico": "/hangman/favicon.ico",
   "index.html": "/hangman/index.html",
+  "logo.svg": "/hangman/logo.svg",
   "manifest.json": "/hangman/manifest.json",
-  "precache-manifest.94caaa4eaded63f6ef4cce9be731c881.js": "/hangman/precache-manifest.94caaa4eaded63f6ef4cce9be731c881.js"
+  "precache-manifest.6295c3580342589049e0f632378abb19.js": "/hangman/precache-manifest.6295c3580342589049e0f632378abb19.js"
 }
