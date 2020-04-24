@@ -399,7 +399,6 @@ viewAlphabetLetter letter =
          , disabled disabled_
          , class "px-4"
          , class "py-2"
-         , class "bg-gray-300"
          , class "my-1"
          ]
             ++ classes
@@ -412,16 +411,16 @@ getClassesAndDisabledForAlphabetLetterButton : AlphabetLetter -> ( List (Html.At
 getClassesAndDisabledForAlphabetLetterButton letter =
     case letter of
         Unused c ->
-            ( [], False, c )
+            ( [ class "bg-gray-300" ], False, c )
 
         CorrectlyUsed c ->
-            ( [ class "opacity-50", class "cursor-not-allowed", class "bg-green-200" ], True, c )
+            ( [ class "bg-green-400", class "opacity-75", class "cursor-not-allowed" ], True, c )
 
         IncorrectlyUsed c ->
-            ( [ class "opacity-50", class "cursor-not-allowed", class "bg-red-300" ], True, c )
+            ( [ class "bg-red-500", class "opacity-75", class "cursor-not-allowed" ], True, c )
 
         Disabled c ->
-            ( [ class "opacity-50", class "cursor-not-allowed" ], True, c )
+            ( [ class "bg-gray-300", class "opacity-50", class "cursor-not-allowed" ], True, c )
 
 
 viewWord : List Letter -> GameState -> Html msg
