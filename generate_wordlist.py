@@ -1,6 +1,6 @@
 from typing import List, Dict
 
-wordlist_files = {"de": "german/german.dic", "en": "english/words.txt"}
+languages = {"de": "german/german.dic", "en": "english/words.txt"}
 wordlist_elm_file = "src/WordList.elm"
 
 
@@ -62,8 +62,8 @@ def generate_word_list(lang: str, wordlist_file: str) -> List[str]:
 
 def main():
     lists = {}
-    for lang in wordlist_files:
-        word_list = generate_word_list(lang, wordlist_files[lang])
+    for lang in languages:
+        word_list = generate_word_list(lang, languages[lang])
         lists[lang] = word_list
     write_file(lists)
 
