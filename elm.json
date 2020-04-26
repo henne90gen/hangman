@@ -1,7 +1,8 @@
 {
     "type": "application",
-    "source-directories": ["src"],
-    "homepage": "https://henne90gen.github.io/hangman/",
+    "source-directories": [
+        "src"
+    ],
     "elm-version": "0.19.1",
     "dependencies": {
         "direct": {
@@ -10,6 +11,7 @@
             "elm/core": "1.0.4",
             "elm/html": "1.0.0",
             "elm/random": "1.0.0",
+            "elm-community/html-extra": "3.4.0",
             "elm-community/list-extra": "8.2.4",
             "elm-community/typed-svg": "6.0.0"
         },

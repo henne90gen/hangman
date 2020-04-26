@@ -3,8 +3,9 @@ module Main exposing (main)
 import Browser
 import Color
 import Html exposing (Html, button, div, option, select, text)
-import Html.Attributes exposing (class, disabled)
+import Html.Attributes exposing (class, disabled, value)
 import Html.Events exposing (onClick)
+import Html.Events.Extra exposing (onChange)
 import List
 import List.Extra
 import Random
@@ -51,7 +52,7 @@ type Msg
     = NewGame
     | NewRandomNumber Int
     | GuessLetter Char
-    | ChangeLanguage Language
+    | ChangeLanguage String
 
 
 init : flags -> ( Model, Cmd Msg )
@@ -113,8 +114,25 @@ update msg model =
         GuessLetter letter ->
             ( guessLetter model letter, Cmd.none )
 
-        ChangeLanguage newLanguage ->
+        ChangeLanguage newLanguageStr ->
+            let
+                newLanguage =
+                    languageFromString newLanguageStr
+            in
             ( startNewGame newLanguage "", generateRandomNumber newLanguage )
+
+
+languageFromString : String -> Language
+languageFromString str =
+    if str == "DE" then
+        DE
+
+    else if str == "EN" then
+        EN
+
+    else
+        -- return default language
+        DE
 
 
 getWordList : Language -> List String
@@ -367,9 +385,10 @@ viewLanguageSelect =
         , class "focus:outline-none"
         , class "focus:bg-white"
         , class "focus:border-gray-500"
+        , onChange ChangeLanguage
         ]
-        [ option [ onClick (ChangeLanguage DE) ] [ text "DE" ]
-        , option [ onClick (ChangeLanguage EN) ] [ text "EN" ]
+        [ option [ value "DE" ] [ text "DE" ]
+        , option [ value "EN" ] [ text "EN" ]
         ]
 
 
