@@ -4,6 +4,7 @@
         "src"
     ],
     "elm-version": "0.19.1",
+    "homepage": "https://henne90gen.github.io/hangman/",
     "dependencies": {
         "direct": {
             "avh4/elm-color": "1.0.0",
