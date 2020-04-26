@@ -468,10 +468,10 @@ getWordClasses gameState =
             []
 
         HasWon ->
-            [ class "bg-green-200" ]
+            [ class "bg-green-400" ]
 
         HasLost ->
-            [ class "bg-red-200" ]
+            [ class "bg-red-400" ]
 
 
 viewLetter : GameState -> Letter -> Html msg
