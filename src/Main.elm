@@ -332,7 +332,7 @@ subscriptions _ =
 
 view : Model -> Browser.Document Msg
 view model =
-    { title = "Hangman"
+    { title = getTitle model.language
     , body =
         [ div [ class "my-2" ]
             [ viewNewGame model.language
@@ -344,6 +344,16 @@ view model =
         , viewHangman model.errorCounter
         ]
     }
+
+
+getTitle : Language -> String
+getTitle language =
+    case language of
+        DE ->
+            "Galgenraten"
+
+        EN ->
+            "Hangman"
 
 
 viewNewGame : Language -> Html Msg
