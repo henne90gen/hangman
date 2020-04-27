@@ -92,7 +92,7 @@ getCorrectWordsTotalText : Language -> String
 getCorrectWordsTotalText language =
     case language of
         DE ->
-            "Korrekte Worte: "
+            "Richtige Worte: "
 
         EN ->
             "Correct Words: "
@@ -100,54 +100,109 @@ getCorrectWordsTotalText language =
 
 getIncorrectWordsTotalText : Language -> String
 getIncorrectWordsTotalText language =
-    "Incorrect Words: "
+    case language of
+        DE ->
+            "Falsche Worte: "
+
+        EN ->
+            "Incorrect Words: "
 
 
 getCorrectLettersTotalText : Language -> String
 getCorrectLettersTotalText language =
-    "Correct Letters: "
+    case language of
+        DE ->
+            "Richtige Buchstaben: "
+
+        EN ->
+            "Correct Letters: "
 
 
 getIncorrectLettersTotalText : Language -> String
 getIncorrectLettersTotalText language =
-    "Incorrect Letters: "
+    case language of
+        DE ->
+            "Falsche Buchstaben: "
+
+        EN ->
+            "Incorrect Letters: "
 
 
 getCurrentCorrectWordStreakText : Language -> String
 getCurrentCorrectWordStreakText language =
-    "Current Correct Word Streak: "
+    case language of
+        DE ->
+            "Aktuelle Serie richtiger Worte: "
+
+        EN ->
+            "Current Correct Word Streak: "
 
 
 getBestCorrectWordStreakText : Language -> String
 getBestCorrectWordStreakText language =
-    "Best Correct Word Streak: "
+    case language of
+        DE ->
+            "Längste Serie richtiger Worte: "
+
+        EN ->
+            "Longest Correct Word Streak: "
 
 
 getCurrentIncorrectWordStreakText : Language -> String
 getCurrentIncorrectWordStreakText language =
-    "Current Incorrect Word Streak: "
+    case language of
+        DE ->
+            "Aktuelle Serie falscher Worte: "
+
+        EN ->
+            "Current Incorrect Word Streak: "
 
 
 getBestIncorrectWordStreakText : Language -> String
 getBestIncorrectWordStreakText language =
-    "Best Incorrect Word Streak: "
+    case language of
+        DE ->
+            "Längste Serie falscher Worte: "
+
+        EN ->
+            "Longest Incorrect Word Streak: "
 
 
 getCurrentCorrectLetterStreakText : Language -> String
 getCurrentCorrectLetterStreakText language =
-    "Current Correct Letter Streak: "
+    case language of
+        DE ->
+            "Aktuelle Serie richtiger Buchstaben: "
+
+        EN ->
+            "Current Correct Letter Streak: "
 
 
 getBestCorrectLetterStreakText : Language -> String
 getBestCorrectLetterStreakText language =
-    "Best Correct Letter Streak: "
+    case language of
+        DE ->
+            "Längste Serie richtiger Buchstaben: "
+
+        EN ->
+            "Longest Correct Letter Streak: "
 
 
 getCurrentIncorrectLetterStreakText : Language -> String
 getCurrentIncorrectLetterStreakText language =
-    "Current Incorrect Letter Streak: "
+    case language of
+        DE ->
+            "Aktuelle Serie falscher Worte: "
+
+        EN ->
+            "Current Incorrect Letter Streak: "
 
 
 getBestIncorrectLetterStreakText : Language -> String
 getBestIncorrectLetterStreakText language =
-    "Best Incorrect Letter Streak: "
+    case language of
+        DE ->
+            "Längste Serie falscher Worte: "
+
+        EN ->
+            "Longest Incorrect Letter Streak: "
