@@ -466,40 +466,50 @@ viewWord letters gameState language =
          , class "mb-2"
          , class "pt-2"
          , class "rounded"
-         , class "bg-gray-300"
          , class "flex"
          , class "flex-col"
          , class "items-center"
          ]
             ++ classes
         )
-        [ div
-            [ class "flex-1" ]
-            (List.map (viewLetter gameState) letters)
-        , viewGoogleLink letters gameState language
+        [ div [ class "flex-1" ] (List.map (viewLetter gameState) letters)
+        , div [ class "flex-1" ]
+            [ viewGoogleLink letters gameState language
+            , viewWikipediaLink letters gameState language
+            ]
         ]
 
 
-viewGoogleLink : List Letter -> GameState -> Language -> Html msg
-viewGoogleLink letters gameState language =
+viewSearchLink : GameState -> Html.Attribute msg -> String -> Html msg
+viewSearchLink gameState link linkText =
     if isGameOver gameState then
         a
             [ target "_blank"
-            , getGoogleLink letters
+            , link
             , class "text-sm"
-            , class "flex-1"
-            , class "mt-2"
-            , class "mb-3"
+            , class "mx-2"
             , class "py-1"
             , class "px-2"
             , class "bg-gray-600"
             , class "text-white"
             , class "rounded"
             ]
-            [ text (getGoogleLinkText language) ]
+            [ text linkText ]
 
     else
         div [] []
+
+
+viewGoogleLink : List Letter -> GameState -> Language -> Html msg
+viewGoogleLink letters gameState language =
+    let
+        link =
+            getGoogleLink letters
+
+        linkText =
+            getGoogleLinkText language
+    in
+    viewSearchLink gameState link linkText
 
 
 getGoogleLink : List Letter -> Html.Attribute msg
@@ -531,6 +541,57 @@ getGoogleLinkText language =
 
         EN ->
             "Google Search"
+
+
+viewWikipediaLink : List Letter -> GameState -> Language -> Html msg
+viewWikipediaLink letters gameState language =
+    let
+        link =
+            getWikipediaLink letters language
+
+        linkText =
+            getWikipediaLinkText language
+    in
+    viewSearchLink gameState link linkText
+
+
+getWikipediaLink : List Letter -> Language -> Html.Attribute msg
+getWikipediaLink letters language =
+    let
+        langPrefix =
+            getWikipediaLanguagePrefix language
+
+        word =
+            letters
+                |> List.map getCharacter
+                |> String.fromList
+    in
+    href
+        ("https://"
+            ++ langPrefix
+            ++ ".wikipedia.org/wiki/Special:Search/"
+            ++ Url.percentEncode word
+        )
+
+
+getWikipediaLanguagePrefix : Language -> String
+getWikipediaLanguagePrefix language =
+    case language of
+        DE ->
+            "de"
+
+        EN ->
+            "en"
+
+
+getWikipediaLinkText : Language -> String
+getWikipediaLinkText language =
+    case language of
+        DE ->
+            "Wikipedia Suche"
+
+        EN ->
+            "Wikipedia Search"
 
 
 getWordClasses : GameState -> List (Html.Attribute msg)
