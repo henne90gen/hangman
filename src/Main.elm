@@ -10,7 +10,7 @@ import List
 import List.Extra
 import Random
 import TypedSvg exposing (circle, g, line, svg)
-import TypedSvg.Attributes exposing (cx, cy, height, r, stroke, strokeWidth, viewBox, width, x1, x2, y1, y2)
+import TypedSvg.Attributes exposing (cx, cy, height, r, stroke, strokeWidth, viewBox, visibility, width, x1, x2, y1, y2)
 import TypedSvg.Core exposing (Svg)
 import TypedSvg.Types exposing (Paint(..), px)
 import WordList exposing (wordList_de, wordList_en)
@@ -528,121 +528,102 @@ viewHangman counter =
 
 viewHangmanSvg : Int -> Html msg
 viewHangmanSvg counter =
-    let
-        temp =
-            List.range 0 (counter - 1)
-    in
     svg
         [ viewBox 0 0 40 40
         , width (px 400)
         , height (px 400)
         ]
-        (List.map viewHangmanLine temp)
-
-
-viewHangmanLine : Int -> Svg msg
-viewHangmanLine index =
-    if index == 0 then
-        line
+        [ line
             [ x1 (px 10)
             , y1 (px 30)
             , x2 (px 20)
             , y2 (px 40)
             , strokeWidth (px 1)
             , stroke <| Paint <| Color.rgba 0 0 0 1
+            , isVisible (counter >= 1)
             ]
             []
-
-    else if index == 1 then
-        line
+        , line
             [ x1 (px 0)
             , y1 (px 40)
             , x2 (px 10)
             , y2 (px 30)
             , strokeWidth (px 1)
             , stroke <| Paint <| Color.rgba 0 0 0 1
+            , isVisible (counter >= 2)
             ]
             []
-
-    else if index == 2 then
-        line
+        , line
             [ x1 (px 10)
             , y1 (px 30)
             , x2 (px 10)
             , y2 (px 20)
             , strokeWidth (px 1)
             , stroke <| Paint <| Color.rgba 0 0 0 1
+            , isVisible (counter >= 3)
             ]
             []
-
-    else if index == 3 then
-        line
+        , line
             [ x1 (px 10)
             , y1 (px 20)
             , x2 (px 10)
             , y2 (px 10)
             , strokeWidth (px 1)
             , stroke <| Paint <| Color.rgba 0 0 0 1
+            , isVisible (counter >= 4)
             ]
             []
-
-    else if index == 4 then
-        line
+        , line
             [ x1 (px 10)
             , y1 (px 10)
             , x2 (px 10)
             , y2 (px 0)
             , strokeWidth (px 1)
             , stroke <| Paint <| Color.rgba 0 0 0 1
+            , isVisible (counter >= 5)
             ]
             []
-
-    else if index == 5 then
-        line
+        , line
             [ x1 (px 10)
             , y1 (px 0)
             , x2 (px 20)
             , y2 (px 0)
             , strokeWidth (px 1)
             , stroke <| Paint <| Color.rgba 0 0 0 1
+            , isVisible (counter >= 6)
             ]
             []
-
-    else if index == 6 then
-        line
+        , line
             [ x1 (px 10)
             , y1 (px 10)
             , x2 (px 20)
             , y2 (px 0)
             , strokeWidth (px 1)
             , stroke <| Paint <| Color.rgba 0 0 0 1
+            , isVisible (counter >= 7)
             ]
             []
-
-    else if index == 7 then
-        line
+        , line
             [ x1 (px 20)
             , y1 (px 0)
             , x2 (px 30)
             , y2 (px 0)
             , strokeWidth (px 1)
             , stroke <| Paint <| Color.rgba 0 0 0 1
+            , isVisible (counter >= 8)
             ]
             []
-
-    else if index == 8 then
-        line
+        , line
             [ x1 (px 30)
             , y1 (px 0)
             , x2 (px 30)
             , y2 (px 10)
             , strokeWidth (px 1)
             , stroke <| Paint <| Color.rgba 0 0 0 1
+            , isVisible (counter >= 9)
             ]
             []
-
-    else if index == 9 then
-        g []
+        , g [ isVisible (counter >= 10) ]
             [ circle
                 [ cx (px 30)
                 , cy (px 10)
@@ -695,9 +676,16 @@ viewHangmanLine index =
                 ]
                 []
             ]
+        ]
+
+
+isVisible : Bool -> TypedSvg.Core.Attribute msg
+isVisible b =
+    if b then
+        visibility "visible"
 
     else
-        line [] []
+        visibility "hidden"
 
 
 viewHasWon : GameState -> Language -> Html msg
