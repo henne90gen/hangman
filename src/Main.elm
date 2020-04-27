@@ -2,7 +2,7 @@ module Main exposing (main)
 
 import Browser
 import Color
-import Html exposing (Html, a, button, div, option, select, text)
+import Html exposing (Html, a, button, div, option, select, span, text)
 import Html.Attributes exposing (class, disabled, href, target, value)
 import Html.Events exposing (onClick)
 import Html.Events.Extra exposing (onChange)
@@ -11,7 +11,7 @@ import List.Extra
 import Random
 import TypedSvg exposing (circle, g, line, svg)
 import TypedSvg.Attributes exposing (cx, cy, height, r, stroke, strokeWidth, viewBox, visibility, width, x1, x2, y1, y2)
-import TypedSvg.Core exposing (Svg)
+import TypedSvg.Core
 import TypedSvg.Types exposing (Paint(..), px)
 import Url
 import WordList exposing (wordList_de, wordList_en)
@@ -40,12 +40,30 @@ type GameState
     | HasLost
 
 
+type alias Statistics =
+    { mostCorrectWordsOverall : Int
+    , mostCorrectWordsCurrent : Int
+    , mostIncorrectWordsOverall : Int
+    , mostIncorrectWordsCurrent : Int
+    , mostCorrectLettersOverall : Int
+    , mostCorrectLettersCurrent : Int
+    , mostIncorrectLettersOverall : Int
+    , mostIncorrectLettersCurrent : Int
+    , correctWordsTotal : Int
+    , incorrectWordsTotal : Int
+    , correctLettersTotal : Int
+    , incorrectLettersTotal : Int
+    }
+
+
 type alias Model =
     { shownWord : List Letter
     , alphabet : List AlphabetLetter
     , errorCounter : Int
     , gameState : GameState
     , language : Language
+    , showStatistics : Bool
+    , statistics : Statistics
     }
 
 
@@ -54,13 +72,31 @@ type Msg
     | NewRandomNumber Int
     | GuessLetter Char
     | ChangeLanguage String
+    | ToggleStatistics
 
 
 init : flags -> ( Model, Cmd Msg )
 init _ =
-    ( startNewGame DE ""
+    ( startNewGame emptyScores False DE ""
     , generateRandomNumber DE
     )
+
+
+emptyScores : Statistics
+emptyScores =
+    { mostCorrectWordsOverall = 0
+    , mostCorrectWordsCurrent = 0
+    , mostIncorrectWordsOverall = 0
+    , mostIncorrectWordsCurrent = 0
+    , mostCorrectLettersOverall = 0
+    , mostCorrectLettersCurrent = 0
+    , mostIncorrectLettersOverall = 0
+    , mostIncorrectLettersCurrent = 0
+    , correctWordsTotal = 0
+    , incorrectWordsTotal = 0
+    , correctLettersTotal = 0
+    , incorrectLettersTotal = 0
+    }
 
 
 generateRandomNumber : Language -> Cmd Msg
@@ -100,7 +136,7 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         NewGame ->
-            ( startNewGame model.language "", generateRandomNumber model.language )
+            ( startNewGame model.statistics model.showStatistics model.language "", generateRandomNumber model.language )
 
         NewRandomNumber num ->
             let
@@ -110,7 +146,7 @@ update msg model =
                 newWord =
                     Maybe.withDefault "" (List.Extra.getAt num wordList)
             in
-            ( startNewGame model.language newWord, Cmd.none )
+            ( startNewGame model.statistics model.showStatistics model.language newWord, Cmd.none )
 
         GuessLetter letter ->
             ( guessLetter model letter, Cmd.none )
@@ -120,7 +156,10 @@ update msg model =
                 newLanguage =
                     languageFromString newLanguageStr
             in
-            ( startNewGame newLanguage "", generateRandomNumber newLanguage )
+            ( startNewGame model.statistics model.showStatistics newLanguage "", generateRandomNumber newLanguage )
+
+        ToggleStatistics ->
+            ( { model | showStatistics = not model.showStatistics }, Cmd.none )
 
 
 languageFromString : String -> Language
@@ -146,8 +185,8 @@ getWordList language =
             wordList_en
 
 
-startNewGame : Language -> String -> Model
-startNewGame language newWord =
+startNewGame : Statistics -> Bool -> Language -> String -> Model
+startNewGame statistics showStatistics language newWord =
     let
         characters =
             String.toList newWord
@@ -160,6 +199,8 @@ startNewGame language newWord =
     , errorCounter = 0
     , gameState = Playing
     , language = language
+    , showStatistics = showStatistics
+    , statistics = statistics
     }
 
 
@@ -186,12 +227,17 @@ guessLetter model c =
 
         gameState =
             checkGameState model.gameState newShownWord newErrorCounter
+
+        statistics =
+            updateWordHighScores model.statistics gameState
     in
     { shownWord = newShownWord
     , alphabet = guessLetterAlphabet model.alphabet c hasFoundLetter gameState
     , errorCounter = newErrorCounter
     , gameState = gameState
     , language = model.language
+    , showStatistics = model.showStatistics
+    , statistics = updateLetterStatistics statistics hasFoundLetter
     }
 
 
@@ -326,6 +372,60 @@ updateErrorCounter errorCounter hasFoundLetter =
         errorCounter + 1
 
 
+updateWordHighScores : Statistics -> GameState -> Statistics
+updateWordHighScores statistics gameState =
+    case gameState of
+        HasWon ->
+            let
+                mostCorrectWordsCurrent =
+                    statistics.mostCorrectWordsCurrent + 1
+            in
+            { statistics
+                | incorrectWordsTotal = statistics.incorrectWordsTotal + 1
+                , mostCorrectWordsCurrent = mostCorrectWordsCurrent
+                , mostCorrectWordsOverall = max mostCorrectWordsCurrent statistics.mostCorrectWordsOverall
+            }
+
+        HasLost ->
+            let
+                mostIncorrectWordsCurrent =
+                    statistics.mostIncorrectWordsCurrent + 1
+            in
+            { statistics
+                | incorrectWordsTotal = statistics.incorrectWordsTotal + 1
+                , mostIncorrectWordsCurrent = mostIncorrectWordsCurrent
+                , mostIncorrectWordsOverall = max mostIncorrectWordsCurrent statistics.mostIncorrectWordsOverall
+            }
+
+        Playing ->
+            statistics
+
+
+updateLetterStatistics : Statistics -> Bool -> Statistics
+updateLetterStatistics statistics hasFoundLetter =
+    if hasFoundLetter then
+        let
+            mostCorrectLettersCurrent =
+                statistics.mostCorrectLettersCurrent + 1
+        in
+        { statistics
+            | correctLettersTotal = statistics.correctLettersTotal + 1
+            , mostCorrectLettersCurrent = mostCorrectLettersCurrent
+            , mostCorrectLettersOverall = max mostCorrectLettersCurrent statistics.mostCorrectLettersOverall
+        }
+
+    else
+        let
+            mostIncorrectLettersCurrent =
+                statistics.mostIncorrectLettersCurrent + 1
+        in
+        { statistics
+            | incorrectLettersTotal = statistics.incorrectLettersTotal + 1
+            , mostIncorrectLettersCurrent = mostIncorrectLettersCurrent
+            , mostIncorrectLettersOverall = max mostIncorrectLettersCurrent statistics.mostIncorrectLettersOverall
+        }
+
+
 subscriptions : Model -> Sub Msg
 subscriptions _ =
     Sub.none
@@ -343,6 +443,7 @@ view model =
         , viewAlphabet model.alphabet
         , viewHasWon model.gameState model.language
         , viewHangman model.errorCounter
+        , viewStatistics model.statistics model.showStatistics model.language
         ]
     }
 
@@ -842,3 +943,81 @@ getLostText language =
 
         EN ->
             "You have lost!"
+
+
+viewStatistics : Statistics -> Bool -> Language -> Html Msg
+viewStatistics statistics showStatistics language =
+    div []
+        [ button
+            [ onClick ToggleStatistics
+            , class "py-2"
+            , class "px-4"
+            , class "rounded"
+            , class "bg-gray-500"
+            , class "text-white"
+            ]
+            [ text <| getShowStatisticsButtonText language ]
+        , viewStatisticsPane statistics showStatistics language
+        ]
+
+
+getShowStatisticsButtonText : Language -> String
+getShowStatisticsButtonText language =
+    case language of
+        DE ->
+            "Statistiken anzeigen"
+
+        EN ->
+            "Show Statistics"
+
+
+viewStatisticsPane : Statistics -> Bool -> Language -> Html msg
+viewStatisticsPane statistics showStatistics language =
+    div [ getStatisticsVisibilityClass showStatistics ]
+        [ div [] [ text <| getCorrectWordsTotalText language ++ String.fromInt statistics.correctWordsTotal ]
+        , div [] [ text <| getIncorrectWordsTotalText language ++ String.fromInt statistics.incorrectWordsTotal ]
+        , div [] [ text <| getCorrectLettersTotalText language ++ String.fromInt statistics.correctLettersTotal ]
+        , div [] [ text <| getIncorrectLettersTotalText language ++ String.fromInt statistics.incorrectLettersTotal ]
+        , div [] [ text <| "Current Correct Word Streak: " ++ String.fromInt statistics.mostCorrectWordsCurrent ]
+        , div [] [ text <| "Best Correct Word Streak: " ++ String.fromInt statistics.mostCorrectWordsOverall ]
+        , div [] [ text <| "Current Incorrect Word Streak: " ++ String.fromInt statistics.mostIncorrectWordsCurrent ]
+        , div [] [ text <| "Best Incorrect Word Streak: " ++ String.fromInt statistics.mostIncorrectWordsOverall ]
+        , div [] [ text <| "Current Correct Letter Streak: " ++ String.fromInt statistics.mostCorrectLettersCurrent ]
+        , div [] [ text <| "Best Correct Letter Streak: " ++ String.fromInt statistics.mostCorrectLettersOverall ]
+        , div [] [ text <| "Current Incorrect Word Streak: " ++ String.fromInt statistics.mostIncorrectLettersCurrent ]
+        , div [] [ text <| "Best Incorrect Word Streak: " ++ String.fromInt statistics.mostIncorrectLettersOverall ]
+        ]
+
+
+getCorrectWordsTotalText : Language -> String
+getCorrectWordsTotalText language =
+    case language of
+        DE ->
+            "Korrekte Worte: "
+
+        EN ->
+            "Correct Words: "
+
+
+getIncorrectWordsTotalText : Language -> String
+getIncorrectWordsTotalText language =
+    "Incorrect Words: "
+
+
+getCorrectLettersTotalText : Language -> String
+getCorrectLettersTotalText language =
+    "Correct Letters: "
+
+
+getIncorrectLettersTotalText : Language -> String
+getIncorrectLettersTotalText language =
+    "Incorrect Letters: "
+
+
+getStatisticsVisibilityClass : Bool -> Html.Attribute msg
+getStatisticsVisibilityClass showStatistics =
+    if showStatistics then
+        class "block"
+
+    else
+        class "hidden"
