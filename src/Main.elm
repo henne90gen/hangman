@@ -2,24 +2,34 @@ module Main exposing (main)
 
 import Browser
 import Color
-import Html exposing (Html, a, button, div, option, select, span, text)
+import Html exposing (Html, a, button, div, option, select, text)
 import Html.Attributes exposing (class, disabled, href, target, value)
 import Html.Events exposing (onClick)
 import Html.Events.Extra exposing (onChange)
 import List
 import List.Extra
 import Random
+import Translations
+    exposing
+        ( Language(..)
+        , getCorrectLettersTotalText
+        , getCorrectWordsTotalText
+        , getGoogleLinkText
+        , getIncorrectLettersTotalText
+        , getIncorrectWordsTotalText
+        , getLostText
+        , getNewGameText
+        , getShowStatisticsButtonText
+        , getTitle
+        , getWikipediaLinkText
+        , getWonText
+        , getWordList
+        )
 import TypedSvg exposing (circle, g, line, svg)
 import TypedSvg.Attributes exposing (cx, cy, height, r, stroke, strokeWidth, viewBox, visibility, width, x1, x2, y1, y2)
 import TypedSvg.Core
 import TypedSvg.Types exposing (Paint(..), px)
 import Url
-import WordList exposing (wordList_de, wordList_en)
-
-
-type Language
-    = DE
-    | EN
 
 
 type Letter
@@ -173,16 +183,6 @@ languageFromString str =
     else
         -- return default language
         DE
-
-
-getWordList : Language -> List String
-getWordList language =
-    case language of
-        DE ->
-            wordList_de
-
-        EN ->
-            wordList_en
 
 
 startNewGame : Statistics -> Bool -> Language -> String -> Model
@@ -384,6 +384,7 @@ updateWordHighScores statistics gameState =
                 | incorrectWordsTotal = statistics.incorrectWordsTotal + 1
                 , mostCorrectWordsCurrent = mostCorrectWordsCurrent
                 , mostCorrectWordsOverall = max mostCorrectWordsCurrent statistics.mostCorrectWordsOverall
+                , mostIncorrectWordsCurrent = 0
             }
 
         HasLost ->
@@ -395,6 +396,7 @@ updateWordHighScores statistics gameState =
                 | incorrectWordsTotal = statistics.incorrectWordsTotal + 1
                 , mostIncorrectWordsCurrent = mostIncorrectWordsCurrent
                 , mostIncorrectWordsOverall = max mostIncorrectWordsCurrent statistics.mostIncorrectWordsOverall
+                , mostCorrectWordsCurrent = 0
             }
 
         Playing ->
@@ -412,6 +414,7 @@ updateLetterStatistics statistics hasFoundLetter =
             | correctLettersTotal = statistics.correctLettersTotal + 1
             , mostCorrectLettersCurrent = mostCorrectLettersCurrent
             , mostCorrectLettersOverall = max mostCorrectLettersCurrent statistics.mostCorrectLettersOverall
+            , mostIncorrectLettersCurrent = 0
         }
 
     else
@@ -423,6 +426,7 @@ updateLetterStatistics statistics hasFoundLetter =
             | incorrectLettersTotal = statistics.incorrectLettersTotal + 1
             , mostIncorrectLettersCurrent = mostIncorrectLettersCurrent
             , mostIncorrectLettersOverall = max mostIncorrectLettersCurrent statistics.mostIncorrectLettersOverall
+            , mostCorrectLettersCurrent = 0
         }
 
 
@@ -448,16 +452,6 @@ view model =
     }
 
 
-getTitle : Language -> String
-getTitle language =
-    case language of
-        DE ->
-            "Galgenraten"
-
-        EN ->
-            "Hangman"
-
-
 viewNewGame : Language -> Html Msg
 viewNewGame language =
     button
@@ -470,16 +464,6 @@ viewNewGame language =
         , class "mx-5"
         ]
         [ text (getNewGameText language) ]
-
-
-getNewGameText : Language -> String
-getNewGameText language =
-    case language of
-        DE ->
-            "Neues Spiel starten"
-
-        EN ->
-            "Start New Game"
 
 
 viewLanguageSelect : Html Msg
@@ -634,16 +618,6 @@ getCharacter letter =
             c
 
 
-getGoogleLinkText : Language -> String
-getGoogleLinkText language =
-    case language of
-        DE ->
-            "Google Suche"
-
-        EN ->
-            "Google Search"
-
-
 viewWikipediaLink : List Letter -> GameState -> Language -> Html msg
 viewWikipediaLink letters gameState language =
     let
@@ -683,16 +657,6 @@ getWikipediaLanguagePrefix language =
 
         EN ->
             "en"
-
-
-getWikipediaLinkText : Language -> String
-getWikipediaLinkText language =
-    case language of
-        DE ->
-            "Wikipedia Suche"
-
-        EN ->
-            "Wikipedia Search"
 
 
 getWordClasses : GameState -> List (Html.Attribute msg)
@@ -925,26 +889,6 @@ viewHasWon gameState language =
             div [ class "my-3" ] [ text (getLostText language) ]
 
 
-getWonText : Language -> String
-getWonText language =
-    case language of
-        DE ->
-            "Du hast gewonnen!"
-
-        EN ->
-            "You have won!"
-
-
-getLostText : Language -> String
-getLostText language =
-    case language of
-        DE ->
-            "Du hast verloren!"
-
-        EN ->
-            "You have lost!"
-
-
 viewStatistics : Statistics -> Bool -> Language -> Html Msg
 viewStatistics statistics showStatistics language =
     div []
@@ -961,16 +905,6 @@ viewStatistics statistics showStatistics language =
         ]
 
 
-getShowStatisticsButtonText : Language -> String
-getShowStatisticsButtonText language =
-    case language of
-        DE ->
-            "Statistiken anzeigen"
-
-        EN ->
-            "Show Statistics"
-
-
 viewStatisticsPane : Statistics -> Bool -> Language -> Html msg
 viewStatisticsPane statistics showStatistics language =
     div [ getStatisticsVisibilityClass showStatistics ]
@@ -984,34 +918,9 @@ viewStatisticsPane statistics showStatistics language =
         , div [] [ text <| "Best Incorrect Word Streak: " ++ String.fromInt statistics.mostIncorrectWordsOverall ]
         , div [] [ text <| "Current Correct Letter Streak: " ++ String.fromInt statistics.mostCorrectLettersCurrent ]
         , div [] [ text <| "Best Correct Letter Streak: " ++ String.fromInt statistics.mostCorrectLettersOverall ]
-        , div [] [ text <| "Current Incorrect Word Streak: " ++ String.fromInt statistics.mostIncorrectLettersCurrent ]
-        , div [] [ text <| "Best Incorrect Word Streak: " ++ String.fromInt statistics.mostIncorrectLettersOverall ]
+        , div [] [ text <| "Current Incorrect Letter Streak: " ++ String.fromInt statistics.mostIncorrectLettersCurrent ]
+        , div [] [ text <| "Best Incorrect Letter Streak: " ++ String.fromInt statistics.mostIncorrectLettersOverall ]
         ]
-
-
-getCorrectWordsTotalText : Language -> String
-getCorrectWordsTotalText language =
-    case language of
-        DE ->
-            "Korrekte Worte: "
-
-        EN ->
-            "Correct Words: "
-
-
-getIncorrectWordsTotalText : Language -> String
-getIncorrectWordsTotalText language =
-    "Incorrect Words: "
-
-
-getCorrectLettersTotalText : Language -> String
-getCorrectLettersTotalText language =
-    "Correct Letters: "
-
-
-getIncorrectLettersTotalText : Language -> String
-getIncorrectLettersTotalText language =
-    "Incorrect Letters: "
 
 
 getStatisticsVisibilityClass : Bool -> Html.Attribute msg
