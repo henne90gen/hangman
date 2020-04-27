@@ -2,8 +2,8 @@ module Main exposing (main)
 
 import Browser
 import Color
-import Html exposing (Html, button, div, option, select, text)
-import Html.Attributes exposing (class, disabled, value)
+import Html exposing (Html, a, button, div, option, select, text)
+import Html.Attributes exposing (class, disabled, href, target, value)
 import Html.Events exposing (onClick)
 import Html.Events.Extra exposing (onChange)
 import List
@@ -13,6 +13,7 @@ import TypedSvg exposing (circle, g, line, svg)
 import TypedSvg.Attributes exposing (cx, cy, height, r, stroke, strokeWidth, viewBox, visibility, width, x1, x2, y1, y2)
 import TypedSvg.Core exposing (Svg)
 import TypedSvg.Types exposing (Paint(..), px)
+import Url
 import WordList exposing (wordList_de, wordList_en)
 
 
@@ -338,7 +339,7 @@ view model =
             [ viewNewGame model.language
             , viewLanguageSelect
             ]
-        , viewWord model.shownWord model.gameState
+        , viewWord model.shownWord model.gameState model.language
         , viewAlphabet model.alphabet
         , viewHasWon model.gameState model.language
         , viewHangman model.errorCounter
@@ -452,8 +453,8 @@ getClassesAndDisabledForAlphabetLetterButton letter =
             ( [ class "bg-gray-300", class "opacity-50", class "cursor-not-allowed" ], True, c )
 
 
-viewWord : List Letter -> GameState -> Html msg
-viewWord letters gameState =
+viewWord : List Letter -> GameState -> Language -> Html msg
+viewWord letters gameState language =
     let
         classes =
             getWordClasses gameState
@@ -465,10 +466,70 @@ viewWord letters gameState =
          , class "mb-2"
          , class "pt-2"
          , class "rounded"
+         , class "bg-gray-300"
+         , class "flex"
+         , class "flex-col"
+         , class "items-center"
          ]
             ++ classes
         )
-        (List.map (viewLetter gameState) letters)
+        [ div
+            [ class "flex-1" ]
+            (List.map (viewLetter gameState) letters)
+        , viewGoogleLink letters gameState language
+        ]
+
+
+viewGoogleLink : List Letter -> GameState -> Language -> Html msg
+viewGoogleLink letters gameState language =
+    if isGameOver gameState then
+        a
+            [ target "_blank"
+            , getGoogleLink letters
+            , class "text-sm"
+            , class "flex-1"
+            , class "my-2"
+            , class "py-1"
+            , class "px-2"
+            , class "bg-gray-600"
+            , class "text-white"
+            , class "rounded"
+            ]
+            [ text (getGoogleLinkText language) ]
+
+    else
+        div [] []
+
+
+getGoogleLink : List Letter -> Html.Attribute msg
+getGoogleLink letters =
+    let
+        word =
+            letters
+                |> List.map getCharacter
+                |> String.fromList
+    in
+    href ("http://www.google.com/search?q=" ++ Url.percentEncode word)
+
+
+getCharacter : Letter -> Char
+getCharacter letter =
+    case letter of
+        Shown c ->
+            c
+
+        Hidden c ->
+            c
+
+
+getGoogleLinkText : Language -> String
+getGoogleLinkText language =
+    case language of
+        DE ->
+            "Google Suche"
+
+        EN ->
+            "Google Search"
 
 
 getWordClasses : GameState -> List (Html.Attribute msg)
