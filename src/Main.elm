@@ -12,8 +12,16 @@ import Random
 import Translations
     exposing
         ( Language(..)
+        , getBestCorrectLetterStreakText
+        , getBestCorrectWordStreakText
+        , getBestIncorrectLetterStreakText
+        , getBestIncorrectWordStreakText
         , getCorrectLettersTotalText
         , getCorrectWordsTotalText
+        , getCurrentCorrectLetterStreakText
+        , getCurrentCorrectWordStreakText
+        , getCurrentIncorrectLetterStreakText
+        , getCurrentIncorrectWordStreakText
         , getGoogleLinkText
         , getIncorrectLettersTotalText
         , getIncorrectWordsTotalText
@@ -912,14 +920,14 @@ viewStatisticsPane statistics showStatistics language =
         , div [] [ text <| getIncorrectWordsTotalText language ++ String.fromInt statistics.incorrectWordsTotal ]
         , div [] [ text <| getCorrectLettersTotalText language ++ String.fromInt statistics.correctLettersTotal ]
         , div [] [ text <| getIncorrectLettersTotalText language ++ String.fromInt statistics.incorrectLettersTotal ]
-        , div [] [ text <| "Current Correct Word Streak: " ++ String.fromInt statistics.mostCorrectWordsCurrent ]
-        , div [] [ text <| "Best Correct Word Streak: " ++ String.fromInt statistics.mostCorrectWordsOverall ]
-        , div [] [ text <| "Current Incorrect Word Streak: " ++ String.fromInt statistics.mostIncorrectWordsCurrent ]
-        , div [] [ text <| "Best Incorrect Word Streak: " ++ String.fromInt statistics.mostIncorrectWordsOverall ]
-        , div [] [ text <| "Current Correct Letter Streak: " ++ String.fromInt statistics.mostCorrectLettersCurrent ]
-        , div [] [ text <| "Best Correct Letter Streak: " ++ String.fromInt statistics.mostCorrectLettersOverall ]
-        , div [] [ text <| "Current Incorrect Letter Streak: " ++ String.fromInt statistics.mostIncorrectLettersCurrent ]
-        , div [] [ text <| "Best Incorrect Letter Streak: " ++ String.fromInt statistics.mostIncorrectLettersOverall ]
+        , div [] [ text <| getCurrentCorrectWordStreakText language ++ String.fromInt statistics.mostCorrectWordsCurrent ]
+        , div [] [ text <| getBestCorrectWordStreakText language ++ String.fromInt statistics.mostCorrectWordsOverall ]
+        , div [] [ text <| getCurrentIncorrectWordStreakText language ++ String.fromInt statistics.mostIncorrectWordsCurrent ]
+        , div [] [ text <| getBestIncorrectWordStreakText language ++ String.fromInt statistics.mostIncorrectWordsOverall ]
+        , div [] [ text <| getCurrentCorrectLetterStreakText language ++ String.fromInt statistics.mostCorrectLettersCurrent ]
+        , div [] [ text <| getBestCorrectLetterStreakText language ++ String.fromInt statistics.mostCorrectLettersOverall ]
+        , div [] [ text <| getCurrentIncorrectLetterStreakText language ++ String.fromInt statistics.mostIncorrectLettersCurrent ]
+        , div [] [ text <| getBestIncorrectLetterStreakText language ++ String.fromInt statistics.mostIncorrectLettersOverall ]
         ]
 
 

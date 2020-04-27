@@ -111,3 +111,43 @@ getCorrectLettersTotalText language =
 getIncorrectLettersTotalText : Language -> String
 getIncorrectLettersTotalText language =
     "Incorrect Letters: "
+
+
+getCurrentCorrectWordStreakText : Language -> String
+getCurrentCorrectWordStreakText language =
+    "Current Correct Word Streak: "
+
+
+getBestCorrectWordStreakText : Language -> String
+getBestCorrectWordStreakText language =
+    "Best Correct Word Streak: "
+
+
+getCurrentIncorrectWordStreakText : Language -> String
+getCurrentIncorrectWordStreakText language =
+    "Current Incorrect Word Streak: "
+
+
+getBestIncorrectWordStreakText : Language -> String
+getBestIncorrectWordStreakText language =
+    "Best Incorrect Word Streak: "
+
+
+getCurrentCorrectLetterStreakText : Language -> String
+getCurrentCorrectLetterStreakText language =
+    "Current Correct Letter Streak: "
+
+
+getBestCorrectLetterStreakText : Language -> String
+getBestCorrectLetterStreakText language =
+    "Best Correct Letter Streak: "
+
+
+getCurrentIncorrectLetterStreakText : Language -> String
+getCurrentIncorrectLetterStreakText language =
+    "Current Incorrect Letter Streak: "
+
+
+getBestIncorrectLetterStreakText : Language -> String
+getBestIncorrectLetterStreakText language =
+    "Best Incorrect Letter Streak: "
