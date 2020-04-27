@@ -488,7 +488,8 @@ viewGoogleLink letters gameState language =
             , getGoogleLink letters
             , class "text-sm"
             , class "flex-1"
-            , class "my-2"
+            , class "mt-2"
+            , class "mb-3"
             , class "py-1"
             , class "px-2"
             , class "bg-gray-600"
