@@ -705,6 +705,7 @@ viewHangmanAndStatistics counter statistics language =
         , class "bg-gray-200"
         , class "py-5"
         , class "mx-5"
+        , class "mb-5"
         , class "rounded"
         ]
         [ viewHangman counter
@@ -730,97 +731,7 @@ viewHangmanSvg counter =
         , width (px 400)
         , height (px 400)
         ]
-        [ line
-            [ x1 (px 10)
-            , y1 (px 30)
-            , x2 (px 20)
-            , y2 (px 40)
-            , strokeWidth (px 1)
-            , stroke <| Paint <| Color.rgba 0 0 0 1
-            , isVisible (counter >= 1)
-            ]
-            []
-        , line
-            [ x1 (px 0)
-            , y1 (px 40)
-            , x2 (px 10)
-            , y2 (px 30)
-            , strokeWidth (px 1)
-            , stroke <| Paint <| Color.rgba 0 0 0 1
-            , isVisible (counter >= 2)
-            ]
-            []
-        , line
-            [ x1 (px 10)
-            , y1 (px 30)
-            , x2 (px 10)
-            , y2 (px 20)
-            , strokeWidth (px 1)
-            , stroke <| Paint <| Color.rgba 0 0 0 1
-            , isVisible (counter >= 3)
-            ]
-            []
-        , line
-            [ x1 (px 10)
-            , y1 (px 20)
-            , x2 (px 10)
-            , y2 (px 10)
-            , strokeWidth (px 1)
-            , stroke <| Paint <| Color.rgba 0 0 0 1
-            , isVisible (counter >= 4)
-            ]
-            []
-        , line
-            [ x1 (px 10)
-            , y1 (px 10)
-            , x2 (px 10)
-            , y2 (px 0)
-            , strokeWidth (px 1)
-            , stroke <| Paint <| Color.rgba 0 0 0 1
-            , isVisible (counter >= 5)
-            ]
-            []
-        , line
-            [ x1 (px 10)
-            , y1 (px 0)
-            , x2 (px 20)
-            , y2 (px 0)
-            , strokeWidth (px 1)
-            , stroke <| Paint <| Color.rgba 0 0 0 1
-            , isVisible (counter >= 6)
-            ]
-            []
-        , line
-            [ x1 (px 10)
-            , y1 (px 10)
-            , x2 (px 20)
-            , y2 (px 0)
-            , strokeWidth (px 1)
-            , stroke <| Paint <| Color.rgba 0 0 0 1
-            , isVisible (counter >= 7)
-            ]
-            []
-        , line
-            [ x1 (px 20)
-            , y1 (px 0)
-            , x2 (px 30)
-            , y2 (px 0)
-            , strokeWidth (px 1)
-            , stroke <| Paint <| Color.rgba 0 0 0 1
-            , isVisible (counter >= 8)
-            ]
-            []
-        , line
-            [ x1 (px 30)
-            , y1 (px 0)
-            , x2 (px 30)
-            , y2 (px 10)
-            , strokeWidth (px 1)
-            , stroke <| Paint <| Color.rgba 0 0 0 1
-            , isVisible (counter >= 9)
-            ]
-            []
-        , g [ isVisible (counter >= 10) ]
+        [ g [ isVisible (counter >= 10) ]
             [ circle
                 [ cx (px 30)
                 , cy (px 10)
@@ -873,6 +784,87 @@ viewHangmanSvg counter =
                 ]
                 []
             ]
+        , line
+            [ x1 (px 30)
+            , y1 (px 0)
+            , x2 (px 30)
+            , y2 (px 10)
+            , strokeWidth (px 1)
+            , stroke <| Paint <| getLineColor (counter >= 9)
+            ]
+            []
+        , line
+            [ x1 (px 20)
+            , y1 (px 0)
+            , x2 (px 30)
+            , y2 (px 0)
+            , strokeWidth (px 1)
+            , stroke <| Paint <| getLineColor (counter >= 8)
+            ]
+            []
+        , line
+            [ x1 (px 10)
+            , y1 (px 10)
+            , x2 (px 20)
+            , y2 (px 0)
+            , strokeWidth (px 1)
+            , stroke <| Paint <| getLineColor (counter >= 7)
+            ]
+            []
+        , line
+            [ x1 (px 10)
+            , y1 (px 0)
+            , x2 (px 20)
+            , y2 (px 0)
+            , strokeWidth (px 1)
+            , stroke <| Paint <| getLineColor (counter >= 6)
+            ]
+            []
+        , line
+            [ x1 (px 10)
+            , y1 (px 10)
+            , x2 (px 10)
+            , y2 (px 0)
+            , strokeWidth (px 1)
+            , stroke <| Paint <| getLineColor (counter >= 5)
+            ]
+            []
+        , line
+            [ x1 (px 10)
+            , y1 (px 20)
+            , x2 (px 10)
+            , y2 (px 10)
+            , strokeWidth (px 1)
+            , stroke <| Paint <| getLineColor (counter >= 4)
+            ]
+            []
+        , line
+            [ x1 (px 10)
+            , y1 (px 30)
+            , x2 (px 10)
+            , y2 (px 20)
+            , strokeWidth (px 1)
+            , stroke <| Paint <| getLineColor (counter >= 3)
+            ]
+            []
+        , line
+            [ x1 (px 0)
+            , y1 (px 40)
+            , x2 (px 10)
+            , y2 (px 30)
+            , strokeWidth (px 1)
+            , stroke <| Paint <| getLineColor (counter >= 2)
+            ]
+            []
+        , line
+            [ x1 (px 10)
+            , y1 (px 30)
+            , x2 (px 20)
+            , y2 (px 40)
+            , strokeWidth (px 1)
+            , stroke <| Paint <| getLineColor (counter >= 1)
+            ]
+            []
         ]
 
 
@@ -885,10 +877,19 @@ isVisible b =
         visibility "hidden"
 
 
+getLineColor : Bool -> Color.Color
+getLineColor active =
+    if active then
+        Color.rgba 0 0 0 1
+
+    else
+        Color.rgba 0.9 0.9 0.9 1
+
+
 viewStatistics : Statistics -> Language -> Html msg
 viewStatistics statistics language =
     div
-        [ class "my-5"
+        [ class "mt-5"
         , class "flex"
         , class "flex-col"
         , class "items-center"
