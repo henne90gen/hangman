@@ -424,8 +424,7 @@ view model =
         , viewWord model.shownWord model.gameState model.language
         , viewAlphabet model.alphabet
         , viewHasWon model.gameState model.language
-        , viewHangman model.errorCounter
-        , viewStatistics model.statistics model.language
+        , viewHangmanAndStatistics model.errorCounter model.statistics model.language
         ]
     }
 
@@ -681,19 +680,32 @@ isGameOver gameState =
             True
 
 
-viewHangman : Int -> Html msg
-viewHangman counter =
+viewHangmanAndStatistics : Int -> Statistics -> Language -> Html msg
+viewHangmanAndStatistics counter statistics language =
     div
-        [ class "flex"
-        , class "flex-col"
-        , class "items-center"
+        [ class "grid"
+        , class "grid-cols-1"
+        , class "lg:grid-cols-2"
+        , class "xl:grid-cols-2"
         , class "bg-gray-200"
         , class "py-5"
         , class "mx-5"
         , class "rounded"
         ]
-        [ div [ class "flex-1" ] [ viewHangmanSvg counter ]
+        [ viewHangman counter
+        , viewStatistics statistics language
         ]
+
+
+viewHangman : Int -> Html msg
+viewHangman counter =
+    div
+        [ class "flex"
+        , class "justify-center"
+        , class "lg:justify-end"
+        , class "xl:justify-end"
+        ]
+        [ viewHangmanSvg counter ]
 
 
 viewHangmanSvg : Int -> Html msg
@@ -858,26 +870,13 @@ isVisible b =
         visibility "hidden"
 
 
-viewHasWon : GameState -> Language -> Html msg
-viewHasWon gameState language =
-    case gameState of
-        Playing ->
-            div [] []
-
-        HasWon ->
-            div [ class "my-3" ] [ text (getWonText language) ]
-
-        HasLost ->
-            div [ class "my-3" ] [ text (getLostText language) ]
-
-
-viewStatistics : Statistics -> Language -> Html Msg
+viewStatistics : Statistics -> Language -> Html msg
 viewStatistics statistics language =
     div
         [ class "my-5"
-        , class "items-center"
         , class "flex"
         , class "flex-col"
+        , class "items-center"
         ]
         [ viewStatisticsPane statistics language
         ]
@@ -899,34 +898,47 @@ viewStatisticsPane statistics language =
             ]
         , tbody []
             [ tr []
-                [ td [ class "px-4", class "py-1" ] [ text <| getWordsTotalText language ]
+                [ td [ class "px-4", class "py-1", class "text-right" ] [ text <| getWordsTotalText language ]
                 , td [ class "px-4", class "py-1" ] [ text <| String.fromInt statistics.correctWordsTotal ]
                 , td [ class "px-4", class "py-1" ] [ text <| String.fromInt statistics.incorrectWordsTotal ]
                 ]
             , tr []
-                [ td [ class "px-4", class "pb-2" ] [ text <| getLettersTotalText language ]
+                [ td [ class "px-4", class "pb-2", class "text-right" ] [ text <| getLettersTotalText language ]
                 , td [ class "px-4", class "pb-2" ] [ text <| String.fromInt statistics.correctLettersTotal ]
                 , td [ class "px-4", class "pb-2" ] [ text <| String.fromInt statistics.incorrectLettersTotal ]
                 ]
             , tr []
-                [ td [ class "px-4", class "pt-2" ] [ text <| getCurrentWordStreakText language ]
+                [ td [ class "px-4", class "pt-2", class "text-right" ] [ text <| getCurrentWordStreakText language ]
                 , td [ class "px-4", class "pt-2" ] [ text <| String.fromInt statistics.mostCorrectWordsCurrent ]
                 , td [ class "px-4", class "pt-2" ] [ text <| String.fromInt statistics.mostIncorrectWordsCurrent ]
                 ]
             , tr []
-                [ td [ class "px-4", class "pb-2" ] [ text <| getBestWordStreakText language ]
+                [ td [ class "px-4", class "pb-2", class "text-right" ] [ text <| getBestWordStreakText language ]
                 , td [ class "px-4", class "pb-2" ] [ text <| String.fromInt statistics.mostCorrectWordsOverall ]
                 , td [ class "px-4", class "pb-2" ] [ text <| String.fromInt statistics.mostIncorrectWordsOverall ]
                 ]
             , tr []
-                [ td [ class "px-4", class "pt-2" ] [ text <| getCurrentLetterStreakText language ]
+                [ td [ class "px-4", class "pt-2", class "text-right" ] [ text <| getCurrentLetterStreakText language ]
                 , td [ class "px-4", class "pt-2" ] [ text <| String.fromInt statistics.mostCorrectLettersCurrent ]
                 , td [ class "px-4", class "pt-2" ] [ text <| String.fromInt statistics.mostIncorrectLettersCurrent ]
                 ]
             , tr []
-                [ td [ class "px-4" ] [ text <| getBestLetterStreakText language ]
+                [ td [ class "px-4", class "text-right" ] [ text <| getBestLetterStreakText language ]
                 , td [ class "px-4" ] [ text <| String.fromInt statistics.mostCorrectLettersOverall ]
                 , td [ class "px-4" ] [ text <| String.fromInt statistics.mostIncorrectLettersOverall ]
                 ]
             ]
         ]
+
+
+viewHasWon : GameState -> Language -> Html msg
+viewHasWon gameState language =
+    case gameState of
+        Playing ->
+            div [] []
+
+        HasWon ->
+            div [ class "my-3" ] [ text (getWonText language) ]
+
+        HasLost ->
+            div [ class "my-3" ] [ text (getLostText language) ]
