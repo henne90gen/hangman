@@ -1,4 +1,4 @@
-module Main exposing (main)
+port module Main exposing (main)
 
 import Browser
 import Color
@@ -68,15 +68,22 @@ type Msg
     | ChangeLanguage String
 
 
-init : flags -> ( Model, Cmd Msg )
-init _ =
-    ( startNewGame emptyScores DE ""
+port saveStatistics : Statistics -> Cmd msg
+
+
+type alias Flags =
+    { statistics : Maybe Statistics }
+
+
+init : Flags -> ( Model, Cmd Msg )
+init flags =
+    ( startNewGame (Maybe.withDefault emptyStatistics flags.statistics) DE ""
     , generateRandomNumber DE
     )
 
 
-emptyScores : Statistics
-emptyScores =
+emptyStatistics : Statistics
+emptyStatistics =
     { mostCorrectWordsOverall = 0
     , mostCorrectWordsCurrent = 0
     , mostIncorrectWordsOverall = 0
@@ -115,7 +122,7 @@ createAlphabetLetter firstLetter c =
         Unused c
 
 
-main : Program () Model Msg
+main : Program Flags Model Msg
 main =
     Browser.document
         { init = init
@@ -129,7 +136,9 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         NewGame ->
-            ( startNewGame model.statistics model.language "", generateRandomNumber model.language )
+            ( startNewGame model.statistics model.language ""
+            , Cmd.batch [ generateRandomNumber model.language, saveStatistics model.statistics ]
+            )
 
         NewRandomNumber num ->
             let
@@ -139,17 +148,23 @@ update msg model =
                 newWord =
                     Maybe.withDefault "" (List.Extra.getAt num wordList)
             in
-            ( startNewGame model.statistics model.language newWord, Cmd.none )
+            ( startNewGame model.statistics model.language newWord, saveStatistics model.statistics )
 
         GuessLetter letter ->
-            ( guessLetter model letter, Cmd.none )
+            let
+                newModel =
+                    guessLetter model letter
+            in
+            ( newModel, saveStatistics newModel.statistics )
 
         ChangeLanguage newLanguageStr ->
             let
                 newLanguage =
                     languageFromString newLanguageStr
             in
-            ( startNewGame model.statistics newLanguage "", generateRandomNumber newLanguage )
+            ( startNewGame model.statistics newLanguage ""
+            , Cmd.batch [ generateRandomNumber newLanguage, saveStatistics model.statistics ]
+            )
 
 
 languageFromString : String -> Language
