@@ -1,15 +1,15 @@
 {
   "main.css": "/hangman/static/css/main.d5300901.chunk.css",
-  "main.js": "/hangman/static/js/main.ae921019.chunk.js",
-  "main.js.map": "/hangman/static/js/main.ae921019.chunk.js.map",
-  "runtime~main.js": "/hangman/static/js/runtime~main.777ea511.js",
-  "runtime~main.js.map": "/hangman/static/js/runtime~main.777ea511.js.map",
-  "vendors~main.js": "/hangman/static/js/vendors~main.83d36ed1.chunk.js",
-  "vendors~main.js.map": "/hangman/static/js/vendors~main.83d36ed1.chunk.js.map",
+  "main.js": "/hangman/static/js/main.f6755c24.chunk.js",
+  "main.js.map": "/hangman/static/js/main.f6755c24.chunk.js.map",
+  "runtime~main.js": "/hangman/static/js/runtime~main.ae4486c1.js",
+  "runtime~main.js.map": "/hangman/static/js/runtime~main.ae4486c1.js.map",
+  "vendors~main.js": "/hangman/static/js/vendors~main.17d73e9c.chunk.js",
+  "vendors~main.js.map": "/hangman/static/js/vendors~main.17d73e9c.chunk.js.map",
   "./service-worker.js": "/hangman/./service-worker.js",
   "favicon.ico": "/hangman/favicon.ico",
   "index.html": "/hangman/index.html",
   "logo.svg": "/hangman/logo.svg",
   "manifest.json": "/hangman/manifest.json",
-  "precache-manifest.09883eb13ed4373c8040c8fd269fc898.js": "/hangman/precache-manifest.09883eb13ed4373c8040c8fd269fc898.js"
+  "precache-manifest.7367435ffb0ae30d8bea0e565b232058.js": "/hangman/precache-manifest.7367435ffb0ae30d8bea0e565b232058.js"
 }
