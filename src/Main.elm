@@ -57,7 +57,6 @@ type alias Model =
     , errorCounter : Int
     , gameState : GameState
     , language : Language
-    , showStatistics : Bool
     , statistics : Statistics
     }
 
@@ -67,12 +66,11 @@ type Msg
     | NewRandomNumber Int
     | GuessLetter Char
     | ChangeLanguage String
-    | ToggleStatistics
 
 
 init : flags -> ( Model, Cmd Msg )
 init _ =
-    ( startNewGame emptyScores False DE ""
+    ( startNewGame emptyScores DE ""
     , generateRandomNumber DE
     )
 
@@ -131,7 +129,7 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         NewGame ->
-            ( startNewGame model.statistics model.showStatistics model.language "", generateRandomNumber model.language )
+            ( startNewGame model.statistics model.language "", generateRandomNumber model.language )
 
         NewRandomNumber num ->
             let
@@ -141,7 +139,7 @@ update msg model =
                 newWord =
                     Maybe.withDefault "" (List.Extra.getAt num wordList)
             in
-            ( startNewGame model.statistics model.showStatistics model.language newWord, Cmd.none )
+            ( startNewGame model.statistics model.language newWord, Cmd.none )
 
         GuessLetter letter ->
             ( guessLetter model letter, Cmd.none )
@@ -151,10 +149,7 @@ update msg model =
                 newLanguage =
                     languageFromString newLanguageStr
             in
-            ( startNewGame model.statistics model.showStatistics newLanguage "", generateRandomNumber newLanguage )
-
-        ToggleStatistics ->
-            ( { model | showStatistics = not model.showStatistics }, Cmd.none )
+            ( startNewGame model.statistics newLanguage "", generateRandomNumber newLanguage )
 
 
 languageFromString : String -> Language
@@ -170,8 +165,8 @@ languageFromString str =
         DE
 
 
-startNewGame : Statistics -> Bool -> Language -> String -> Model
-startNewGame statistics showStatistics language newWord =
+startNewGame : Statistics -> Language -> String -> Model
+startNewGame statistics language newWord =
     let
         characters =
             String.toList newWord
@@ -184,7 +179,6 @@ startNewGame statistics showStatistics language newWord =
     , errorCounter = 0
     , gameState = Playing
     , language = language
-    , showStatistics = showStatistics
     , statistics = statistics
     }
 
@@ -221,7 +215,6 @@ guessLetter model c =
     , errorCounter = newErrorCounter
     , gameState = gameState
     , language = model.language
-    , showStatistics = model.showStatistics
     , statistics = updateLetterStatistics statistics hasFoundLetter
     }
 
@@ -366,7 +359,7 @@ updateWordHighScores statistics gameState =
                     statistics.mostCorrectWordsCurrent + 1
             in
             { statistics
-                | incorrectWordsTotal = statistics.incorrectWordsTotal + 1
+                | correctWordsTotal = statistics.correctWordsTotal + 1
                 , mostCorrectWordsCurrent = mostCorrectWordsCurrent
                 , mostCorrectWordsOverall = max mostCorrectWordsCurrent statistics.mostCorrectWordsOverall
                 , mostIncorrectWordsCurrent = 0
@@ -432,7 +425,7 @@ view model =
         , viewAlphabet model.alphabet
         , viewHasWon model.gameState model.language
         , viewHangman model.errorCounter
-        , viewStatistics model.statistics model.showStatistics model.language
+        , viewStatistics model.statistics model.language
         ]
     }
 
@@ -878,32 +871,22 @@ viewHasWon gameState language =
             div [ class "my-3" ] [ text (getLostText language) ]
 
 
-viewStatistics : Statistics -> Bool -> Language -> Html Msg
-viewStatistics statistics showStatistics language =
+viewStatistics : Statistics -> Language -> Html Msg
+viewStatistics statistics language =
     div
         [ class "my-5"
         , class "items-center"
         , class "flex"
         , class "flex-col"
         ]
-        [ button
-            [ onClick ToggleStatistics
-            , class "py-2"
-            , class "px-4"
-            , class "rounded"
-            , class "bg-gray-500"
-            , class "text-white"
-            ]
-            [ text <| getShowStatisticsButtonText language ]
-        , viewStatisticsPane statistics showStatistics language
+        [ viewStatisticsPane statistics language
         ]
 
 
-viewStatisticsPane : Statistics -> Bool -> Language -> Html msg
-viewStatisticsPane statistics showStatistics language =
+viewStatisticsPane : Statistics -> Language -> Html msg
+viewStatisticsPane statistics language =
     table
-        [ getStatisticsVisibilityClass showStatistics
-        , class "my-5"
+        [ class "my-2"
         , class "table-auto"
         , class "border-collapse"
         ]
@@ -947,12 +930,3 @@ viewStatisticsPane statistics showStatistics language =
                 ]
             ]
         ]
-
-
-getStatisticsVisibilityClass : Bool -> Html.Attribute msg
-getStatisticsVisibilityClass showStatistics =
-    if showStatistics then
-        class "table"
-
-    else
-        class "hidden"

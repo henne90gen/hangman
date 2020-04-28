@@ -148,8 +148,21 @@ getBestLetterStreakText language =
             "Longest Letter Streak"
 
 
+getStatisticsTableHeaderCorrect : Language -> String
 getStatisticsTableHeaderCorrect language =
-    "Richtig"
+    case language of
+        DE ->
+            "Richtig"
 
+        EN ->
+            "Correct"
+
+
+getStatisticsTableHeaderIncorrect : Language -> String
 getStatisticsTableHeaderIncorrect language =
-    "Falsch"
+    case language of
+        DE ->
+            "Falsch"
+
+        EN ->
+            "Incorrect"
