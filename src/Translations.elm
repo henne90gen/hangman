@@ -88,121 +88,68 @@ getShowStatisticsButtonText language =
             "Show Statistics"
 
 
-getCorrectWordsTotalText : Language -> String
-getCorrectWordsTotalText language =
+getWordsTotalText : Language -> String
+getWordsTotalText language =
     case language of
         DE ->
-            "Richtige Worte: "
+            "Worte"
 
         EN ->
-            "Correct Words: "
+            "Words"
 
 
-getIncorrectWordsTotalText : Language -> String
-getIncorrectWordsTotalText language =
+getLettersTotalText : Language -> String
+getLettersTotalText language =
     case language of
         DE ->
-            "Falsche Worte: "
+            "Buchstaben"
 
         EN ->
-            "Incorrect Words: "
+            "Letters"
 
 
-getCorrectLettersTotalText : Language -> String
-getCorrectLettersTotalText language =
+getCurrentWordStreakText : Language -> String
+getCurrentWordStreakText language =
     case language of
         DE ->
-            "Richtige Buchstaben: "
+            "Aktuelle Wortserie"
 
         EN ->
-            "Correct Letters: "
+            "Current Word Streak"
 
 
-getIncorrectLettersTotalText : Language -> String
-getIncorrectLettersTotalText language =
+getBestWordStreakText : Language -> String
+getBestWordStreakText language =
     case language of
         DE ->
-            "Falsche Buchstaben: "
+            "Längste Wortserie"
 
         EN ->
-            "Incorrect Letters: "
+            "Longest Word Streak"
 
 
-getCurrentCorrectWordStreakText : Language -> String
-getCurrentCorrectWordStreakText language =
+getCurrentLetterStreakText : Language -> String
+getCurrentLetterStreakText language =
     case language of
         DE ->
-            "Aktuelle Serie richtiger Worte: "
+            "Aktuelle Buchstabenserie"
 
         EN ->
-            "Current Correct Word Streak: "
+            "Current Letter Streak"
 
 
-getBestCorrectWordStreakText : Language -> String
-getBestCorrectWordStreakText language =
+getBestLetterStreakText : Language -> String
+getBestLetterStreakText language =
     case language of
         DE ->
-            "Längste Serie richtiger Worte: "
+            "Längste Buchstabenserie"
 
         EN ->
-            "Longest Correct Word Streak: "
+            "Longest Letter Streak"
 
 
-getCurrentIncorrectWordStreakText : Language -> String
-getCurrentIncorrectWordStreakText language =
-    case language of
-        DE ->
-            "Aktuelle Serie falscher Worte: "
+getStatisticsTableHeaderCorrect language =
+    "Richtig"
 
-        EN ->
-            "Current Incorrect Word Streak: "
-
-
-getBestIncorrectWordStreakText : Language -> String
-getBestIncorrectWordStreakText language =
-    case language of
-        DE ->
-            "Längste Serie falscher Worte: "
-
-        EN ->
-            "Longest Incorrect Word Streak: "
-
-
-getCurrentCorrectLetterStreakText : Language -> String
-getCurrentCorrectLetterStreakText language =
-    case language of
-        DE ->
-            "Aktuelle Serie richtiger Buchstaben: "
-
-        EN ->
-            "Current Correct Letter Streak: "
-
-
-getBestCorrectLetterStreakText : Language -> String
-getBestCorrectLetterStreakText language =
-    case language of
-        DE ->
-            "Längste Serie richtiger Buchstaben: "
-
-        EN ->
-            "Longest Correct Letter Streak: "
-
-
-getCurrentIncorrectLetterStreakText : Language -> String
-getCurrentIncorrectLetterStreakText language =
-    case language of
-        DE ->
-            "Aktuelle Serie falscher Worte: "
-
-        EN ->
-            "Current Incorrect Letter Streak: "
-
-
-getBestIncorrectLetterStreakText : Language -> String
-getBestIncorrectLetterStreakText language =
-    case language of
-        DE ->
-            "Längste Serie falscher Worte: "
-
-        EN ->
-            "Longest Incorrect Letter Streak: "
+getStatisticsTableHeaderIncorrect language =
+    "Falsch"

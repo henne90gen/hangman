@@ -2,37 +2,14 @@ module Main exposing (main)
 
 import Browser
 import Color
-import Html exposing (Html, a, button, div, option, select, text)
+import Html exposing (Html, a, button, div, option, select, table, tbody, td, text, th, thead, tr)
 import Html.Attributes exposing (class, disabled, href, target, value)
 import Html.Events exposing (onClick)
 import Html.Events.Extra exposing (onChange)
 import List
 import List.Extra
 import Random
-import Translations
-    exposing
-        ( Language(..)
-        , getBestCorrectLetterStreakText
-        , getBestCorrectWordStreakText
-        , getBestIncorrectLetterStreakText
-        , getBestIncorrectWordStreakText
-        , getCorrectLettersTotalText
-        , getCorrectWordsTotalText
-        , getCurrentCorrectLetterStreakText
-        , getCurrentCorrectWordStreakText
-        , getCurrentIncorrectLetterStreakText
-        , getCurrentIncorrectWordStreakText
-        , getGoogleLinkText
-        , getIncorrectLettersTotalText
-        , getIncorrectWordsTotalText
-        , getLostText
-        , getNewGameText
-        , getShowStatisticsButtonText
-        , getTitle
-        , getWikipediaLinkText
-        , getWonText
-        , getWordList
-        )
+import Translations exposing (..)
 import TypedSvg exposing (circle, g, line, svg)
 import TypedSvg.Attributes exposing (cx, cy, height, r, stroke, strokeWidth, viewBox, visibility, width, x1, x2, y1, y2)
 import TypedSvg.Core
@@ -566,7 +543,7 @@ viewWord letters gameState language =
             ++ classes
         )
         [ div [ class "flex-1" ] (List.map (viewLetter gameState) letters)
-        , div [ class "flex-1" ]
+        , div [ class "flex-1", class "mb-2" ]
             [ viewGoogleLink letters gameState language
             , viewWikipediaLink letters gameState language
             ]
@@ -717,6 +694,10 @@ viewHangman counter =
         [ class "flex"
         , class "flex-col"
         , class "items-center"
+        , class "bg-gray-200"
+        , class "py-5"
+        , class "mx-5"
+        , class "rounded"
         ]
         [ div [ class "flex-1" ] [ viewHangmanSvg counter ]
         ]
@@ -899,7 +880,12 @@ viewHasWon gameState language =
 
 viewStatistics : Statistics -> Bool -> Language -> Html Msg
 viewStatistics statistics showStatistics language =
-    div []
+    div
+        [ class "my-5"
+        , class "items-center"
+        , class "flex"
+        , class "flex-col"
+        ]
         [ button
             [ onClick ToggleStatistics
             , class "py-2"
@@ -915,26 +901,58 @@ viewStatistics statistics showStatistics language =
 
 viewStatisticsPane : Statistics -> Bool -> Language -> Html msg
 viewStatisticsPane statistics showStatistics language =
-    div [ getStatisticsVisibilityClass showStatistics ]
-        [ div [] [ text <| getCorrectWordsTotalText language ++ String.fromInt statistics.correctWordsTotal ]
-        , div [] [ text <| getIncorrectWordsTotalText language ++ String.fromInt statistics.incorrectWordsTotal ]
-        , div [] [ text <| getCorrectLettersTotalText language ++ String.fromInt statistics.correctLettersTotal ]
-        , div [] [ text <| getIncorrectLettersTotalText language ++ String.fromInt statistics.incorrectLettersTotal ]
-        , div [] [ text <| getCurrentCorrectWordStreakText language ++ String.fromInt statistics.mostCorrectWordsCurrent ]
-        , div [] [ text <| getBestCorrectWordStreakText language ++ String.fromInt statistics.mostCorrectWordsOverall ]
-        , div [] [ text <| getCurrentIncorrectWordStreakText language ++ String.fromInt statistics.mostIncorrectWordsCurrent ]
-        , div [] [ text <| getBestIncorrectWordStreakText language ++ String.fromInt statistics.mostIncorrectWordsOverall ]
-        , div [] [ text <| getCurrentCorrectLetterStreakText language ++ String.fromInt statistics.mostCorrectLettersCurrent ]
-        , div [] [ text <| getBestCorrectLetterStreakText language ++ String.fromInt statistics.mostCorrectLettersOverall ]
-        , div [] [ text <| getCurrentIncorrectLetterStreakText language ++ String.fromInt statistics.mostIncorrectLettersCurrent ]
-        , div [] [ text <| getBestIncorrectLetterStreakText language ++ String.fromInt statistics.mostIncorrectLettersOverall ]
+    table
+        [ getStatisticsVisibilityClass showStatistics
+        , class "my-5"
+        , class "table-auto"
+        , class "border-collapse"
+        ]
+        [ thead []
+            [ tr []
+                [ th [ class "px-4", class "py-1" ] []
+                , th [ class "px-4", class "py-1" ] [ text <| getStatisticsTableHeaderCorrect language ]
+                , th [ class "px-4", class "py-1" ] [ text <| getStatisticsTableHeaderIncorrect language ]
+                ]
+            ]
+        , tbody []
+            [ tr []
+                [ td [ class "px-4", class "py-1" ] [ text <| getWordsTotalText language ]
+                , td [ class "px-4", class "py-1" ] [ text <| String.fromInt statistics.correctWordsTotal ]
+                , td [ class "px-4", class "py-1" ] [ text <| String.fromInt statistics.incorrectWordsTotal ]
+                ]
+            , tr []
+                [ td [ class "px-4", class "pb-2" ] [ text <| getLettersTotalText language ]
+                , td [ class "px-4", class "pb-2" ] [ text <| String.fromInt statistics.correctLettersTotal ]
+                , td [ class "px-4", class "pb-2" ] [ text <| String.fromInt statistics.incorrectLettersTotal ]
+                ]
+            , tr []
+                [ td [ class "px-4", class "pt-2" ] [ text <| getCurrentWordStreakText language ]
+                , td [ class "px-4", class "pt-2" ] [ text <| String.fromInt statistics.mostCorrectWordsCurrent ]
+                , td [ class "px-4", class "pt-2" ] [ text <| String.fromInt statistics.mostIncorrectWordsCurrent ]
+                ]
+            , tr []
+                [ td [ class "px-4", class "pb-2" ] [ text <| getBestWordStreakText language ]
+                , td [ class "px-4", class "pb-2" ] [ text <| String.fromInt statistics.mostCorrectWordsOverall ]
+                , td [ class "px-4", class "pb-2" ] [ text <| String.fromInt statistics.mostIncorrectWordsOverall ]
+                ]
+            , tr []
+                [ td [ class "px-4", class "pt-2" ] [ text <| getCurrentLetterStreakText language ]
+                , td [ class "px-4", class "pt-2" ] [ text <| String.fromInt statistics.mostCorrectLettersCurrent ]
+                , td [ class "px-4", class "pt-2" ] [ text <| String.fromInt statistics.mostIncorrectLettersCurrent ]
+                ]
+            , tr []
+                [ td [ class "px-4" ] [ text <| getBestLetterStreakText language ]
+                , td [ class "px-4" ] [ text <| String.fromInt statistics.mostCorrectLettersOverall ]
+                , td [ class "px-4" ] [ text <| String.fromInt statistics.mostIncorrectLettersOverall ]
+                ]
+            ]
         ]
 
 
 getStatisticsVisibilityClass : Bool -> Html.Attribute msg
 getStatisticsVisibilityClass showStatistics =
     if showStatistics then
-        class "block"
+        class "table"
 
     else
         class "hidden"
