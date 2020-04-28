@@ -1,8 +1,7 @@
-from typing import List, Dict, Tuple
+from typing import List, Set, Dict, Tuple
 import numpy as np
 
 languages = {
-    "de_short": "german/nouns.dic",
     "de": "german/german.dic",
     "en": "english/words.txt"
 }
@@ -35,31 +34,7 @@ def levenshtein(seq1, seq2):
     return (matrix[size_x - 1, size_y - 1])
 
 
-def write_file(word_lists: Dict[str, List[str]]):
-    variables = []
-    exposed_variables = []
-    for lang in word_lists:
-        total_num_characters = 0
-        words = []
-        for word in word_lists[lang]:
-            word = word[:-1]
-            words.append(f"\"{word}\"")
-            total_num_characters += len(word)
-        resultStr = "\n    , ".join(words)
-
-        variable = f"""\
-wordList_{lang} : List String
-wordList_{lang} =
-    [ {resultStr}
-    ]
-"""
-        exposed_variables.append(f"wordList_{lang}")
-        variables.append(variable)
-
-        num_words = len(words)
-        average_word_length = total_num_characters / num_words
-        print(f"{lang}: {num_words} words, {average_word_length} average word length")
-
+def write_file(variables: List[str], exposed_variables: List[str]):
     exposed_variables_str = ", ".join(exposed_variables)
     variables_str = "\n".join(variables)
     file_template = f"""\
@@ -73,57 +48,87 @@ module WordList exposing ({exposed_variables_str})
 
 
 def has_double_letter(word: str):
-    return len(set(word)) != len(word)
+    for index in range(1, len(word)):
+        if word[index] == word[index-1]:
+            return True
+    return False
 
 
-def generate_word_list(lang: str, wordlist_file: str) -> List[str]:
-    with open(wordlist_file) as f:
-        lines = f.readlines()
-
-    result = []
-    for line in lines:
-        word = line.strip()
-        if not word:
-            continue
-
-        if lang == "de" and word[0].islower():
-            continue
-
-        if len(word) < 6:
-            continue
-
-        if has_double_letter(word):
-            continue
-
-        result.append(line)
-
-    return result
+def test_double_letter():
+    assert has_double_letter("Hello")
+    assert not has_double_letter("Helo")
 
 
-def check_distances(word_list: List[str]) -> List[str]:
-    result = []
-    for index, word in enumerate(word_list):
-        if index == 0:
-            result.append(word)
-            continue
+def should_remove_word(lang: str, words: Set[str], word: str):
+    if not word:
+        return True
 
-        prev_word = word_list[index-1]
+    if lang == "de" and word[0].islower():
+        return True
 
-        dist = levenshtein(word, prev_word)
-        if dist >= 3:
-            result.append(word)
+    if len(word) < 6 or len(word) > 18:
+        return True
 
-    return result
+    if has_double_letter(word):
+        return True
+
+    if word in words:
+        return True
+    if word[:-1] in words:
+        return True
+    if word[:-2] in words:
+        return True
+    if word[:-3] in words:
+        return True
+
+    return False
 
 
 def main():
     lists = {}
+    variables = []
+    exposed_variables = []
     for lang in languages:
-        word_list = generate_word_list(lang, languages[lang])
-        word_list = check_distances(word_list)
-        lists[lang] = word_list
+        with open(languages[lang]) as f:
+            lines = f.readlines()
 
-    write_file(lists)
+        words = set()
+        total_num_words = 0
+        total_num_characters = 0
+        resultStr = ""
+        for index, line in enumerate(lines):
+            word = line.strip()
+
+            if should_remove_word(lang, words, word):
+                continue
+
+            words.add(word)
+
+            resultStr += f"\"{word}\"\n    , "
+            total_num_words += 1
+            total_num_characters += len(word)
+
+        # remove trailing line break and comma
+        resultStr = resultStr[:-7]
+
+        variable = f"""\
+wordList_{lang}_count : Int
+wordList_{lang}_count =
+    {total_num_words}
+
+wordList_{lang} : List String
+wordList_{lang} =
+    [ {resultStr}
+    ]
+"""
+        exposed_variables.append(f"wordList_{lang}")
+        variables.append(variable)
+
+        average_word_length = total_num_characters / total_num_words
+        print(
+            f"{lang}: {total_num_words} words, {average_word_length} average word length")
+
+    write_file(variables, exposed_variables)
 
 
 if __name__ == "__main__":
