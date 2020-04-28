@@ -4,7 +4,7 @@ const autoprefixer = require('autoprefixer');
 const path = require('path');
 const webpack = require('webpack');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
-const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
+const TerserPlugin = require('terser-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const ManifestPlugin = require('webpack-manifest-plugin');
 const InterpolateHtmlPlugin = require('react-dev-utils/InterpolateHtmlPlugin');
@@ -57,20 +57,15 @@ module.exports = {
   },
   optimization: {
     minimizer: [
-      new UglifyJsPlugin({
-        uglifyOptions: {
+      new TerserPlugin({
+        terserOptions: {
           // ES5 is required in the minified code if you want compatibility with IE11,
           // otherwise you can bump it up to ES8
-          ecma: 5,
+          ecma: 2017,
           // Compression settings mostly based on <https://guide.elm-lang.org/optimization/asset_size.html>
           compress: {
             passes: 2,
-            warnings: false,
-            // Disabled because of an issue with Uglify breaking seemingly valid code:
-            // https://github.com/facebook/create-react-app/issues/2376
-            // Pending further investigation:
-            // https://github.com/mishoo/UglifyJS2/issues/2011
-            comparisons: false,
+            warnings: true,
             pure_getters: true,
             keep_fargs: false,
             unsafe_comps: true,
@@ -106,9 +101,10 @@ module.exports = {
         },
         // Use multi-process parallel running to improve the build speed
         // Default number of concurrent runs: os.cpus().length - 1
-        parallel: true,
+        parallel: 4,
         // Enable file caching
         cache: true,
+        extractComments: false,
         sourceMap: shouldUseSourceMap
       }),
       new OptimizeCSSAssetsPlugin({
