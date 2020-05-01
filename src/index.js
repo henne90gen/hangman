@@ -74,48 +74,76 @@ const app = Elm.Main.init({
     node: document.getElementById('root'),
 });
 
+function schemaIsCorrect(obj) {
+    const keys = Object.keys(obj);
+    if (keys.indexOf('localGroups') === -1) {
+        return false;
+    }
+    if (keys.indexOf('remoteGroupIndices') === -1) {
+        return false;
+    }
+    return true;
+}
+
 function getWordList(language) {
     const wordListStr = localStorage.getItem(language);
     if (wordListStr) {
-        return JSON.parse(wordListStr);
+        const parsedObj = JSON.parse(wordListStr);
+        if (schemaIsCorrect(parsedObj)) {
+            return parsedObj;
+        }
+        localStorage.removeItem(language);
     }
 
-    const wordList = [];
-    for (let i in groupSizes[language]) {
-        wordList.push([]);
+    const localGroups = [];
+    for (let i = 0; i < 10; i++) {
+        localGroups.push([]);
     }
 
-    return wordList;
+    const remoteGroups = [];
+    while (remoteGroups.length < 10) {
+        const group = random(groupSizes[language].length);
+        if (remoteGroups.indexOf(group) === -1) {
+            remoteGroups.push(group);
+        }
+    }
+
+    return { localGroups, remoteGroups };
 }
 
 function setWordList(language, wordList) {
-    localStorage.setItem(language, JSON.stringify(wordList));
+    try {
+        localStorage.setItem(language, JSON.stringify(wordList));
+    } catch (error) {
+        console.error('PANIC! Could not save word list for ' + language + '.');
+    }
+}
+
+function random(num) {
+    return Math.floor(Math.random() * num);
 }
 
 function getWord(langUpper) {
     const language = langUpper.toLowerCase();
     const wordList = getWordList(language);
-    const chosenGroupIndex = Math.floor(Math.random() * wordList.length);
-    if (chosenGroupIndex >= wordList.length) {
-        console.error('PANIC!', { chosenGroupIndex, wordList });
-        return;
-    }
+    const localGroupIndex = random(wordList.localGroups.length);
+    const localGroup = wordList.localGroups[localGroupIndex];
 
-    const chosenGroup = wordList[chosenGroupIndex];
-    if (chosenGroup.length !== 0) {
-        const chosenWordIndex = Math.floor(Math.random() * chosenGroup.length);
-        if (chosenWordIndex >= chosenGroup.length) {
-            console.error('PANIC!', { chosenWordIndex, chosenGroup });
+    if (localGroup.length !== 0) {
+        const chosenWordIndex = random(localGroup.length);
+        if (chosenWordIndex >= localGroup.length) {
+            console.error('PANIC!', { chosenWordIndex, localGroup });
             return;
         }
         app.ports.receiveWord.send([
             language.toUpperCase(),
-            chosenGroup[chosenWordIndex],
+            localGroup[chosenWordIndex],
         ]);
         return;
     }
 
-    const url = PUBLIC_URL + '/languages/' + language + '/' + chosenGroupIndex;
+    const remoteGroupIndex = wordList.remoteGroups[localGroupIndex];
+    const url = PUBLIC_URL + '/languages/' + language + '/' + remoteGroupIndex;
     fetch(url)
         .then((response) => {
             if (!response.ok) {
@@ -126,10 +154,10 @@ function getWord(langUpper) {
         .then((words) => {
             const newGroup = words.split('\n');
 
-            wordList[chosenGroupIndex] = newGroup;
+            wordList.localGroups[localGroupIndex] = newGroup;
             setWordList(language, wordList);
 
-            const chosenWordIndex = Math.floor(Math.random() * newGroup.length);
+            const chosenWordIndex = random(newGroup.length);
             if (chosenWordIndex >= newGroup.length) {
                 console.error('PANIC!', { chosenWordIndex, newGroup });
                 return;

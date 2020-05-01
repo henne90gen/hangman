@@ -90,10 +90,15 @@ init flags =
     )
 
 
+alphabetString : String
+alphabetString =
+    "abcdefghijklmnopqrstuvwxyzäöüß"
+
+
 createInitialModel : Maybe Statistics -> Model
 createInitialModel statistics =
     { shownWord = []
-    , alphabet = List.map Unused (String.toList "abcdefghijklmnopqrstuvwxyzäöüß")
+    , alphabet = List.map Unused (String.toList alphabetString)
     , errorCounter = 0
     , gameState = Playing
     , language = Translations.defaultLanguage
@@ -173,7 +178,7 @@ update msg model =
                 newLanguage =
                     Translations.languageFromString newLanguageStr
             in
-            ( { model | language = newLanguage }
+            ( { model | language = newLanguage, alphabet = List.map Disabled (String.toList alphabetString) }
             , Cmd.batch
                 [ requestWord (Translations.languageToString newLanguage)
                 , saveStatistics model.statistics
@@ -195,7 +200,7 @@ startNewGame model language newWord =
     in
     { model
         | shownWord = List.indexedMap (toLetter firstLetter) characters
-        , alphabet = createAlphabet "abcdefghijklmnopqrstuvwxyzäöüß" firstLetter
+        , alphabet = createAlphabet alphabetString firstLetter
         , errorCounter = 0
         , gameState = Playing
         , language = language
