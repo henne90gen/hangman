@@ -552,6 +552,13 @@ viewWord letters gameState language =
     let
         classes =
             getWordClasses gameState
+
+        renderedLetters =
+            if List.isEmpty letters then
+                [ div [ class "text-transparent" ] [ text "_" ] ]
+
+            else
+                List.map (viewLetter gameState) letters
     in
     div
         ([ class "text-4xl"
@@ -566,7 +573,7 @@ viewWord letters gameState language =
          ]
             ++ classes
         )
-        [ div [ class "flex-1" ] (List.map (viewLetter gameState) letters)
+        [ div [ class "flex-1" ] renderedLetters
         , div [ class "flex-1", class "mb-2" ]
             [ viewGoogleLink letters gameState language
             , viewWikipediaLink letters gameState language
