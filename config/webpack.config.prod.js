@@ -241,18 +241,18 @@ module.exports = {
 
             // all files with a '.ts' extension will be handled by 'ts-loader'
             {
-              test: /\.ts$/,
-              exclude: [
-                  /[/\\\\]elm-stuff[/\\\\]/,
-                  /[/\\\\]node_modules[/\\\\]/,
-              ],
-              include: paths.appSrc,
-              use: [
-                  {
-                      loader: require.resolve('ts-loader'),
-                  },
-              ],
-          },
+                test: /\.ts$/,
+                exclude: [
+                    /[/\\\\]elm-stuff[/\\\\]/,
+                    /[/\\\\]node_modules[/\\\\]/,
+                ],
+                include: paths.appSrc,
+                use: [
+                    {
+                        loader: require.resolve('ts-loader'),
+                    },
+                ],
+            },
 
             // "postcss" loader applies autoprefixer to our CSS.
             // "css" loader resolves paths in CSS and adds assets as dependencies.
