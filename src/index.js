@@ -76,9 +76,7 @@ const app = Elm.Main.init({
 
 function getWordList(language) {
     const wordListStr = localStorage.getItem(language);
-    console.log(wordListStr);
     if (wordListStr) {
-        console.log(wordListStr);
         return JSON.parse(wordListStr);
     }
 
@@ -104,19 +102,20 @@ function getWord(langUpper) {
     }
 
     const chosenGroup = wordList[chosenGroupIndex];
-    console.log({ chosenGroup });
     if (chosenGroup.length !== 0) {
         const chosenWordIndex = Math.floor(Math.random() * chosenGroup.length);
         if (chosenWordIndex >= chosenGroup.length) {
             console.error('PANIC!', { chosenWordIndex, chosenGroup });
             return;
         }
-        app.ports.receiveWord.send([language.toUpperCase(), chosenGroup[chosenWordIndex]]);
+        app.ports.receiveWord.send([
+            language.toUpperCase(),
+            chosenGroup[chosenWordIndex],
+        ]);
         return;
     }
 
     const url = PUBLIC_URL + '/languages/' + language + '/' + chosenGroupIndex;
-    console.log({ url });
     fetch(url)
         .then((response) => {
             if (!response.ok) {
@@ -136,7 +135,10 @@ function getWord(langUpper) {
                 return;
             }
 
-            app.ports.receiveWord.send([language.toUpperCase(), newGroup[chosenWordIndex]]);
+            app.ports.receiveWord.send([
+                language.toUpperCase(),
+                newGroup[chosenWordIndex],
+            ]);
         })
         .catch((e) => {
             console.error(e);

@@ -171,7 +171,7 @@ update msg model =
         ChangeLanguage newLanguageStr ->
             let
                 newLanguage =
-                    Debug.log "New Language" (Translations.languageFromString newLanguageStr)
+                    Translations.languageFromString newLanguageStr
             in
             ( { model | language = newLanguage }
             , Cmd.batch
