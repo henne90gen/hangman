@@ -13,5 +13,5 @@ Start the development server with `npm start`
 
 Create a production build with `npm run build`
 
-Run `python generate_wordlist.py` to generate `src/WordList.elm`.
+Run `python generate_wordlist.py` to generate the word lists.
 Settings for which languages to generate can be found at the top of `generate_wordlist.py`
