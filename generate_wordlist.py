@@ -8,7 +8,7 @@ languages = {
     "en": ("english/words.txt", 20)
 }
 base_directory = "public/languages"
-wordlist_js_file = "src/wordList.js"
+wordlist_ts_file = "src/wordList.ts"
 
 
 def has_double_letter(word: str):
@@ -150,7 +150,7 @@ const groupSizes = {{
 export default groupSizes;
 """
 
-    with open(wordlist_js_file, "w+") as f:
+    with open(wordlist_ts_file, "w+") as f:
         f.write(file_template)
 
 

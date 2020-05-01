@@ -3,7 +3,8 @@
         "module": "commonjs",
         "target": "es5",
         "strict": true,
-        "sourceMap": false
+        "sourceMap": true,
+        "noEmitOnError": true
     },
-    "exclude": ["node_modules", "generated"]
+    "exclude": ["node_modules", "elm-stuff", "config", "build"]
 }

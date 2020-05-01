@@ -1,15 +1,22 @@
 import './main.css';
 import { Elm } from './Main.elm';
 import groupSizes from './wordList';
-import * as serviceWorker from './serviceWorker';
 
 const key = 'SecretKey';
 const PUBLIC_URL = process.env.PUBLIC_URL;
+let app: MainAppType | null = null;
+
+type Language = 'de' | 'en';
+
+type WordList = {
+    localGroups: string[][];
+    remoteGroups: number[];
+};
 
 /**
  * Encrypts a string to a hexadecimal number using the XOR cipher
  */
-function encrypt(input) {
+function encrypt(input: string): string {
     let c = '';
     let privateKey = key;
     while (privateKey.length < input.length) {
@@ -21,7 +28,7 @@ function encrypt(input) {
 
         const xorValue = value1 ^ value2;
 
-        let xorValueAsHexString = xorValue.toString('16');
+        let xorValueAsHexString = xorValue.toString(16);
 
         if (xorValueAsHexString.length < 2) {
             xorValueAsHexString = '0' + xorValueAsHexString;
@@ -35,7 +42,7 @@ function encrypt(input) {
 /**
  * Decrypts a string of hexadecimal numbers using the XOR cipher
  */
-function decrypt(input) {
+function decrypt(input: string): string {
     let c = '';
     let privateKey = key;
     while (privateKey.length < input.length / 2) {
@@ -53,13 +60,13 @@ function decrypt(input) {
     return c;
 }
 
-function saveStatistics(statistics) {
+function saveStatistics(statistics: Statistics) {
     const stringStatistics = JSON.stringify(statistics);
     const encryptedStatistics = encrypt(stringStatistics);
     localStorage.setItem('statistics', encryptedStatistics);
 }
 
-function loadStatistics() {
+function loadStatistics(): Statistics | null {
     const storedStatistics = localStorage.getItem('statistics');
     let parsedStatistics = null;
     if (storedStatistics) {
@@ -69,12 +76,7 @@ function loadStatistics() {
     return parsedStatistics;
 }
 
-const app = Elm.Main.init({
-    flags: { statistics: loadStatistics() },
-    node: document.getElementById('root'),
-});
-
-function schemaIsCorrect(obj) {
+function schemaIsCorrect(obj: any) {
     const keys = Object.keys(obj);
     if (keys.indexOf('localGroups') === -1) {
         return false;
@@ -85,7 +87,7 @@ function schemaIsCorrect(obj) {
     return true;
 }
 
-function getWordList(language) {
+function getWordList(language: Language) {
     const wordListStr = localStorage.getItem(language);
     if (wordListStr) {
         const parsedObj = JSON.parse(wordListStr);
@@ -111,7 +113,7 @@ function getWordList(language) {
     return { localGroups, remoteGroups };
 }
 
-function setWordList(language, wordList) {
+function setWordList(language: Language, wordList: WordList) {
     try {
         localStorage.setItem(language, JSON.stringify(wordList));
     } catch (error) {
@@ -119,12 +121,12 @@ function setWordList(language, wordList) {
     }
 }
 
-function random(num) {
+function random(num: number) {
     return Math.floor(Math.random() * num);
 }
 
-function getWord(langUpper) {
-    const language = langUpper.toLowerCase();
+function getWord(langUpper: 'DE' | 'EN') {
+    const language = langUpper.toLowerCase() as Language;
     const wordList = getWordList(language);
     const localGroupIndex = random(wordList.localGroups.length);
     const localGroup = wordList.localGroups[localGroupIndex];
@@ -135,7 +137,7 @@ function getWord(langUpper) {
             console.error('PANIC!', { chosenWordIndex, localGroup });
             return;
         }
-        app.ports.receiveWord.send([
+        app?.ports.receiveWord.send([
             language.toUpperCase(),
             localGroup[chosenWordIndex],
         ]);
@@ -163,7 +165,7 @@ function getWord(langUpper) {
                 return;
             }
 
-            app.ports.receiveWord.send([
+            app?.ports.receiveWord.send([
                 language.toUpperCase(),
                 newGroup[chosenWordIndex],
             ]);
@@ -173,10 +175,18 @@ function getWord(langUpper) {
         });
 }
 
-app.ports.saveStatistics.subscribe(saveStatistics);
-app.ports.requestWord.subscribe(getWord);
+document.addEventListener('DOMContentLoaded', function () {
+    app = Elm.Main.init({
+        flags: { statistics: loadStatistics() },
+        node: document.getElementById('root'),
+    });
+
+    app.ports.saveStatistics.subscribe(saveStatistics);
+    app.ports.requestWord.subscribe(getWord);
+});
 
 // If you want your app to work offline and load faster, you can change
 // unregister() to register() below. Note this comes with some pitfalls.
 // Learn more about service workers: https://bit.ly/CRA-PWA
-serviceWorker.unregister();
+// import * as serviceWorker from './serviceWorker';
+// serviceWorker.unregister();

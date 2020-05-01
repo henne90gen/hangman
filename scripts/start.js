@@ -61,7 +61,7 @@ function printInstructions(appName, urls) {
   console.log();
   console.log('Note that the development build is not optimized.');
   console.log(
-    `To create a production build, use ` + `${chalk.cyan('elm-app build')}.`
+    `To create a production build, use ` + `${chalk.cyan('npm run build')}.`
   );
   console.log();
 }

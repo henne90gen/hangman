@@ -7,7 +7,7 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 const CaseSensitivePathsPlugin = require('case-sensitive-paths-webpack-plugin');
 const InterpolateHtmlPlugin = require('react-dev-utils/InterpolateHtmlPlugin');
 const getClientEnvironment = require('./env');
-const paths = require('../config/paths');
+const paths = require('./paths');
 
 // Webpack uses `publicPath` to determine where the app is being served from.
 // In development, we always serve from the root. This makes config easier.
@@ -80,15 +80,13 @@ module.exports = {
     },
     resolve: {
         modules: ['node_modules'],
-        extensions: ['.js', '.elm', '.ts'],
+        extensions: ['.js', '.ts', '.elm'],
     },
     module: {
         strictExportPresence: true,
         rules: [
             // Disable require.ensure as it's not a standard language feature.
             { parser: { requireEnsure: false } },
-            // all files with a '.ts' or '.tsx' extension will be handled by 'ts-loader'
-            { test: /\.tsx?$/, use: ['ts-loader'], exclude: /node_modules/ },
             {
                 test: /\.js$/,
                 exclude: [
@@ -194,6 +192,21 @@ module.exports = {
                 ],
             },
 
+            // all files with a '.ts' extension will be handled by 'ts-loader'
+            {
+                test: /\.ts$/,
+                exclude: [
+                    /[/\\\\]elm-stuff[/\\\\]/,
+                    /[/\\\\]node_modules[/\\\\]/,
+                ],
+                include: paths.appSrc,
+                use: [
+                    {
+                        loader: require.resolve('ts-loader'),
+                    },
+                ],
+            },
+
             // "postcss" loader applies autoprefixer to our CSS.
             // "css" loader resolves paths in CSS and adds assets as dependencies.
             // "style" loader turns CSS into JS modules that inject <style> tags.
@@ -235,6 +248,7 @@ module.exports = {
                 exclude: [
                     /\.html$/,
                     /\.js$/,
+                    /\.ts$/,
                     /\.elm$/,
                     /\.css$/,
                     /\.scss$/,

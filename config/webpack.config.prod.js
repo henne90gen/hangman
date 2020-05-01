@@ -135,14 +135,12 @@ module.exports = {
     },
     resolve: {
         modules: ['node_modules'],
-        extensions: ['.js', '.elm'],
+        extensions: ['.js', '.ts', '.elm'],
     },
     module: {
         strictExportPresence: true,
 
         rules: [
-            // all files with a '.ts' or '.tsx' extension will be handled by 'ts-loader'
-            { test: /\.tsx?$/, use: ['ts-loader'], exclude: /node_modules/ },
             {
                 test: /\.js$/,
                 exclude: [
@@ -241,6 +239,21 @@ module.exports = {
                 ],
             },
 
+            // all files with a '.ts' extension will be handled by 'ts-loader'
+            {
+              test: /\.ts$/,
+              exclude: [
+                  /[/\\\\]elm-stuff[/\\\\]/,
+                  /[/\\\\]node_modules[/\\\\]/,
+              ],
+              include: paths.appSrc,
+              use: [
+                  {
+                      loader: require.resolve('ts-loader'),
+                  },
+              ],
+          },
+
             // "postcss" loader applies autoprefixer to our CSS.
             // "css" loader resolves paths in CSS and adds assets as dependencies.
             // `MiniCSSExtractPlugin` extracts styles into CSS
@@ -280,6 +293,7 @@ module.exports = {
                 exclude: [
                     /\.html$/,
                     /\.js$/,
+                    /\.ts$/,
                     /\.elm$/,
                     /\.css$/,
                     /\.scss$/,
