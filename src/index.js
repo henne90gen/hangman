@@ -79,7 +79,7 @@ function schemaIsCorrect(obj) {
     if (keys.indexOf('localGroups') === -1) {
         return false;
     }
-    if (keys.indexOf('remoteGroupIndices') === -1) {
+    if (keys.indexOf('remoteGroups') === -1) {
         return false;
     }
     return true;

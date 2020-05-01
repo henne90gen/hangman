@@ -51,6 +51,8 @@
     "strip-ansi": "6.0.0",
     "style-loader": "0.21.0",
     "terser-webpack-plugin": "^2.3.6",
+    "ts-loader": "^7.0.2",
+    "typescript": "^3.8.3",
     "url-loader": "1.1.2",
     "webpack": "4.42.1",
     "webpack-dev-server": "3.10.3",

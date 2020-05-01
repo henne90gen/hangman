@@ -35,7 +35,7 @@ if (fs.existsSync('elm.json') === false) {
 }
 
 // Warn and crash if required files are missing
-if (!checkRequiredFiles([paths.appIndexJs, paths.appHtml])) {
+if (!checkRequiredFiles([paths.appIndexTs, paths.appHtml])) {
   process.exit(1);
 }
 

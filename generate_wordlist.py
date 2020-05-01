@@ -4,7 +4,7 @@ import os
 import shutil
 
 languages = {
-    "de": ("german/german.dic", 40),
+    "de": ("german/german.dic", 56),
     "en": ("english/words.txt", 20)
 }
 base_directory = "public/languages"
