@@ -7,9 +7,7 @@ import Html.Attributes exposing (class, disabled, href, target, value)
 import Html.Events exposing (onClick)
 import Html.Events.Extra exposing (onChange)
 import List
-import List.Extra
-import Random
-import Translations exposing (..)
+import Translations
 import TypedSvg exposing (circle, g, line, svg)
 import TypedSvg.Attributes exposing (cx, cy, height, r, stroke, strokeWidth, viewBox, visibility, width, x1, x2, y1, y2)
 import TypedSvg.Core
@@ -56,30 +54,51 @@ type alias Model =
     , alphabet : List AlphabetLetter
     , errorCounter : Int
     , gameState : GameState
-    , language : Language
+    , language : Translations.Language
     , statistics : Statistics
     }
 
 
 type Msg
-    = NewGame
-    | NewRandomNumber Int
+    = NewGameButtonPressed
     | GuessLetter Char
     | ChangeLanguage String
-
-
-port saveStatistics : Statistics -> Cmd msg
+    | GotWord Translations.Language String
 
 
 type alias Flags =
     { statistics : Maybe Statistics }
 
 
+port saveStatistics : Statistics -> Cmd msg
+
+
+port requestWord : String -> Cmd msg
+
+
+port receiveWord : (( String, String ) -> msg) -> Sub msg
+
+
+
+-- INIT
+
+
 init : Flags -> ( Model, Cmd Msg )
 init flags =
-    ( startNewGame (Maybe.withDefault emptyStatistics flags.statistics) DE ""
-    , generateRandomNumber DE
+    ( createInitialModel flags.statistics
+    , requestWord (Translations.languageToString Translations.defaultLanguage)
     )
+
+
+createInitialModel : Maybe Statistics -> Model
+createInitialModel statistics =
+    { shownWord = []
+    , alphabet = List.map Unused (String.toList "abcdefghijklmnopqrstuvwxyzäöüß")
+    , errorCounter = 0
+    , gameState = Playing
+    , language = Translations.defaultLanguage
+    , statistics = Maybe.withDefault emptyStatistics statistics
+    }
 
 
 emptyStatistics : Statistics
@@ -99,15 +118,6 @@ emptyStatistics =
     }
 
 
-generateRandomNumber : Language -> Cmd Msg
-generateRandomNumber language =
-    let
-        wordList =
-            getWordList language
-    in
-    Random.generate NewRandomNumber (Random.int 0 (List.length wordList - 1))
-
-
 createAlphabet : String -> Char -> List AlphabetLetter
 createAlphabet str firstLetter =
     List.map (createAlphabetLetter firstLetter) (String.toList str)
@@ -122,6 +132,10 @@ createAlphabetLetter firstLetter c =
         Unused c
 
 
+
+-- MAIN
+
+
 main : Program Flags Model Msg
 main =
     Browser.document
@@ -132,23 +146,20 @@ main =
         }
 
 
+
+-- UPDATE
+
+
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        NewGame ->
-            ( startNewGame model.statistics model.language ""
-            , Cmd.batch [ generateRandomNumber model.language, saveStatistics model.statistics ]
+        NewGameButtonPressed ->
+            ( model
+            , Cmd.batch
+                [ requestWord (Translations.languageToString model.language)
+                , saveStatistics model.statistics
+                ]
             )
-
-        NewRandomNumber num ->
-            let
-                wordList =
-                    getWordList model.language
-
-                newWord =
-                    Maybe.withDefault "" (List.Extra.getAt num wordList)
-            in
-            ( startNewGame model.statistics model.language newWord, saveStatistics model.statistics )
 
         GuessLetter letter ->
             let
@@ -160,28 +171,21 @@ update msg model =
         ChangeLanguage newLanguageStr ->
             let
                 newLanguage =
-                    languageFromString newLanguageStr
+                    Debug.log "New Language" (Translations.languageFromString newLanguageStr)
             in
-            ( startNewGame model.statistics newLanguage ""
-            , Cmd.batch [ generateRandomNumber newLanguage, saveStatistics model.statistics ]
+            ( { model | language = newLanguage }
+            , Cmd.batch
+                [ requestWord (Translations.languageToString newLanguage)
+                , saveStatistics model.statistics
+                ]
             )
 
-
-languageFromString : String -> Language
-languageFromString str =
-    if str == "DE" then
-        DE
-
-    else if str == "EN" then
-        EN
-
-    else
-        -- return default language
-        DE
+        GotWord language word ->
+            ( startNewGame model language word, Cmd.none )
 
 
-startNewGame : Statistics -> Language -> String -> Model
-startNewGame statistics language newWord =
+startNewGame : Model -> Translations.Language -> String -> Model
+startNewGame model language newWord =
     let
         characters =
             String.toList newWord
@@ -189,12 +193,12 @@ startNewGame statistics language newWord =
         firstLetter =
             Char.toLower (Maybe.withDefault ' ' (List.head characters))
     in
-    { shownWord = List.indexedMap (toLetter firstLetter) characters
-    , alphabet = createAlphabet "abcdefghijklmnopqrstuvwxyzäöüß" firstLetter
-    , errorCounter = 0
-    , gameState = Playing
-    , language = language
-    , statistics = statistics
+    { model
+        | shownWord = List.indexedMap (toLetter firstLetter) characters
+        , alphabet = createAlphabet "abcdefghijklmnopqrstuvwxyzäöüß" firstLetter
+        , errorCounter = 0
+        , gameState = Playing
+        , language = language
     }
 
 
@@ -423,17 +427,25 @@ updateLetterStatistics statistics hasFoundLetter =
         }
 
 
+
+-- SUBSCRIPTIONS
+
+
 subscriptions : Model -> Sub Msg
 subscriptions _ =
-    Sub.none
+    receiveWord (\( lang, word ) -> GotWord (Translations.languageFromString lang) word)
+
+
+
+-- VIEW
 
 
 view : Model -> Browser.Document Msg
 view model =
-    { title = getTitle model.language
+    { title = Translations.getTitle model.language
     , body =
         [ div [ class "my-2" ]
-            [ viewNewGame model.language
+            [ viewNewGameButton model.language
             , viewLanguageSelect
             ]
         , viewWord model.shownWord model.gameState model.language
@@ -444,10 +456,10 @@ view model =
     }
 
 
-viewNewGame : Language -> Html Msg
-viewNewGame language =
+viewNewGameButton : Translations.Language -> Html Msg
+viewNewGameButton language =
     button
-        [ onClick NewGame
+        [ onClick NewGameButtonPressed
         , class "px-4"
         , class "py-2"
         , class "bg-blue-700"
@@ -455,7 +467,7 @@ viewNewGame language =
         , class "text-white"
         , class "mx-5"
         ]
-        [ text (getNewGameText language) ]
+        [ text (Translations.getNewGameText language) ]
 
 
 viewLanguageSelect : Html Msg
@@ -530,7 +542,7 @@ getClassesAndDisabledForAlphabetLetterButton letter =
             ( [ class "bg-gray-300", class "opacity-50", class "cursor-not-allowed" ], True, c )
 
 
-viewWord : List Letter -> GameState -> Language -> Html msg
+viewWord : List Letter -> GameState -> Translations.Language -> Html msg
 viewWord letters gameState language =
     let
         classes =
@@ -577,14 +589,14 @@ viewSearchLink gameState link linkText =
         div [] []
 
 
-viewGoogleLink : List Letter -> GameState -> Language -> Html msg
+viewGoogleLink : List Letter -> GameState -> Translations.Language -> Html msg
 viewGoogleLink letters gameState language =
     let
         link =
             getGoogleLink letters
 
         linkText =
-            getGoogleLinkText language
+            Translations.getGoogleLinkText language
     in
     viewSearchLink gameState link linkText
 
@@ -610,19 +622,19 @@ getCharacter letter =
             c
 
 
-viewWikipediaLink : List Letter -> GameState -> Language -> Html msg
+viewWikipediaLink : List Letter -> GameState -> Translations.Language -> Html msg
 viewWikipediaLink letters gameState language =
     let
         link =
             getWikipediaLink letters language
 
         linkText =
-            getWikipediaLinkText language
+            Translations.getWikipediaLinkText language
     in
     viewSearchLink gameState link linkText
 
 
-getWikipediaLink : List Letter -> Language -> Html.Attribute msg
+getWikipediaLink : List Letter -> Translations.Language -> Html.Attribute msg
 getWikipediaLink letters language =
     let
         langPrefix =
@@ -641,13 +653,13 @@ getWikipediaLink letters language =
         )
 
 
-getWikipediaLanguagePrefix : Language -> String
+getWikipediaLanguagePrefix : Translations.Language -> String
 getWikipediaLanguagePrefix language =
     case language of
-        DE ->
+        Translations.DE ->
             "de"
 
-        EN ->
+        Translations.EN ->
             "en"
 
 
@@ -695,7 +707,7 @@ isGameOver gameState =
             True
 
 
-viewHangmanAndStatistics : Int -> Statistics -> Language -> Html msg
+viewHangmanAndStatistics : Int -> Statistics -> Translations.Language -> Html msg
 viewHangmanAndStatistics counter statistics language =
     div
         [ class "grid"
@@ -886,7 +898,7 @@ getLineColor active =
         Color.rgba 0.9 0.9 0.9 1
 
 
-viewStatistics : Statistics -> Language -> Html msg
+viewStatistics : Statistics -> Translations.Language -> Html msg
 viewStatistics statistics language =
     div
         [ class "mt-5"
@@ -898,7 +910,7 @@ viewStatistics statistics language =
         ]
 
 
-viewStatisticsPane : Statistics -> Language -> Html msg
+viewStatisticsPane : Statistics -> Translations.Language -> Html msg
 viewStatisticsPane statistics language =
     table
         [ class "my-2"
@@ -908,38 +920,38 @@ viewStatisticsPane statistics language =
         [ thead []
             [ tr []
                 [ th [ class "px-4", class "py-1" ] []
-                , th [ class "px-4", class "py-1" ] [ text <| getStatisticsTableHeaderCorrect language ]
-                , th [ class "px-4", class "py-1" ] [ text <| getStatisticsTableHeaderIncorrect language ]
+                , th [ class "px-4", class "py-1" ] [ text <| Translations.getStatisticsTableHeaderCorrect language ]
+                , th [ class "px-4", class "py-1" ] [ text <| Translations.getStatisticsTableHeaderIncorrect language ]
                 ]
             ]
         , tbody []
             [ tr []
-                [ td [ class "px-4", class "py-1", class "text-right" ] [ text <| getWordsTotalText language ]
+                [ td [ class "px-4", class "py-1", class "text-right" ] [ text <| Translations.getWordsTotalText language ]
                 , td [ class "px-4", class "py-1" ] [ text <| String.fromInt statistics.correctWordsTotal ]
                 , td [ class "px-4", class "py-1" ] [ text <| String.fromInt statistics.incorrectWordsTotal ]
                 ]
             , tr []
-                [ td [ class "px-4", class "pb-2", class "text-right" ] [ text <| getLettersTotalText language ]
+                [ td [ class "px-4", class "pb-2", class "text-right" ] [ text <| Translations.getLettersTotalText language ]
                 , td [ class "px-4", class "pb-2" ] [ text <| String.fromInt statistics.correctLettersTotal ]
                 , td [ class "px-4", class "pb-2" ] [ text <| String.fromInt statistics.incorrectLettersTotal ]
                 ]
             , tr []
-                [ td [ class "px-4", class "pt-2", class "text-right" ] [ text <| getCurrentWordStreakText language ]
+                [ td [ class "px-4", class "pt-2", class "text-right" ] [ text <| Translations.getCurrentWordStreakText language ]
                 , td [ class "px-4", class "pt-2" ] [ text <| String.fromInt statistics.mostCorrectWordsCurrent ]
                 , td [ class "px-4", class "pt-2" ] [ text <| String.fromInt statistics.mostIncorrectWordsCurrent ]
                 ]
             , tr []
-                [ td [ class "px-4", class "pb-2", class "text-right" ] [ text <| getBestWordStreakText language ]
+                [ td [ class "px-4", class "pb-2", class "text-right" ] [ text <| Translations.getBestWordStreakText language ]
                 , td [ class "px-4", class "pb-2" ] [ text <| String.fromInt statistics.mostCorrectWordsOverall ]
                 , td [ class "px-4", class "pb-2" ] [ text <| String.fromInt statistics.mostIncorrectWordsOverall ]
                 ]
             , tr []
-                [ td [ class "px-4", class "pt-2", class "text-right" ] [ text <| getCurrentLetterStreakText language ]
+                [ td [ class "px-4", class "pt-2", class "text-right" ] [ text <| Translations.getCurrentLetterStreakText language ]
                 , td [ class "px-4", class "pt-2" ] [ text <| String.fromInt statistics.mostCorrectLettersCurrent ]
                 , td [ class "px-4", class "pt-2" ] [ text <| String.fromInt statistics.mostIncorrectLettersCurrent ]
                 ]
             , tr []
-                [ td [ class "px-4", class "text-right" ] [ text <| getBestLetterStreakText language ]
+                [ td [ class "px-4", class "text-right" ] [ text <| Translations.getBestLetterStreakText language ]
                 , td [ class "px-4" ] [ text <| String.fromInt statistics.mostCorrectLettersOverall ]
                 , td [ class "px-4" ] [ text <| String.fromInt statistics.mostIncorrectLettersOverall ]
                 ]
@@ -947,14 +959,14 @@ viewStatisticsPane statistics language =
         ]
 
 
-viewHasWon : GameState -> Language -> Html msg
+viewHasWon : GameState -> Translations.Language -> Html msg
 viewHasWon gameState language =
     case gameState of
         Playing ->
             div [] []
 
         HasWon ->
-            div [ class "my-3" ] [ text (getWonText language) ]
+            div [ class "my-3" ] [ text (Translations.getWonText language) ]
 
         HasLost ->
-            div [ class "my-3" ] [ text (getLostText language) ]
+            div [ class "my-3" ] [ text (Translations.getLostText language) ]

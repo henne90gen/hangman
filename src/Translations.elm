@@ -1,11 +1,47 @@
 module Translations exposing (..)
 
-import WordList exposing (wordList_de, wordList_en)
-
 
 type Language
     = DE
     | EN
+
+
+defaultLanguage : Language
+defaultLanguage =
+    DE
+
+
+languageFromString : String -> Language
+languageFromString str =
+    if str == "DE" then
+        DE
+
+    else if str == "EN" then
+        EN
+
+    else
+        -- return default language
+        defaultLanguage
+
+
+languageToString : Language -> String
+languageToString language =
+    case language of
+        DE ->
+            "DE"
+
+        EN ->
+            "EN"
+
+
+toDirectory : Language -> String
+toDirectory language =
+    case language of
+        DE ->
+            "de/"
+
+        EN ->
+            "en/"
 
 
 getTitle : Language -> String
@@ -26,16 +62,6 @@ getNewGameText language =
 
         EN ->
             "Start New Game"
-
-
-getWordList : Language -> List String
-getWordList language =
-    case language of
-        DE ->
-            wordList_de
-
-        EN ->
-            wordList_en
 
 
 getWonText : Language -> String

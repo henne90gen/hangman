@@ -1,50 +1,14 @@
 from typing import List, Set, Dict, Tuple
 import numpy as np
+import os
+import shutil
 
 languages = {
-    "de": "german/german.dic",
-    "en": "english/words.txt"
+    "de": ("german/german.dic", 40),
+    "en": ("english/words.txt", 20)
 }
-wordlist_elm_file = "src/WordList.elm"
-
-
-def levenshtein(seq1, seq2):
-    size_x = len(seq1) + 1
-    size_y = len(seq2) + 1
-    matrix = np.zeros((size_x, size_y))
-    for x in range(size_x):
-        matrix[x, 0] = x
-    for y in range(size_y):
-        matrix[0, y] = y
-
-    for x in range(1, size_x):
-        for y in range(1, size_y):
-            if seq1[x-1] == seq2[y-1]:
-                matrix[x, y] = min(
-                    matrix[x-1, y] + 1,
-                    matrix[x-1, y-1],
-                    matrix[x, y-1] + 1
-                )
-            else:
-                matrix[x, y] = min(
-                    matrix[x-1, y] + 1,
-                    matrix[x-1, y-1] + 1,
-                    matrix[x, y-1] + 1
-                )
-    return (matrix[size_x - 1, size_y - 1])
-
-
-def write_file(variables: List[str], exposed_variables: List[str]):
-    exposed_variables_str = ", ".join(exposed_variables)
-    variables_str = "\n".join(variables)
-    file_template = f"""\
-module WordList exposing ({exposed_variables_str})
-
-{variables_str}\
-"""
-
-    with open(wordlist_elm_file, "w+") as f:
-        f.write(file_template)
+base_directory = "public/languages"
+wordlist_js_file = "src/wordList.js"
 
 
 def has_double_letter(word: str):
@@ -84,51 +48,124 @@ def should_remove_word(lang: str, words: Set[str], word: str):
     return False
 
 
-def main():
-    lists = {}
-    variables = []
+def format_file_size(file_size: float) -> str:
+    if file_size < 1024:
+        return f"{file_size:.2f} B"
+
+    if file_size < 1024 * 1024:
+        file_size /= 1024
+        return f"{file_size:.2f} KB"
+
+    if file_size < 1024 * 1024 * 1024:
+        file_size /= 1024 * 1024
+        return f"{file_size:.2f} MB"
+
+    return f"{file_size:.2f} B"
+
+
+def process_language(base_directory: str, languages: Dict[str, Tuple[str, int]], lang: str):
+    file_name, num_groups = languages[lang]
+    with open(file_name) as f:
+        lines = f.readlines()
+
+    words = set()
+    total_num_words = 0
+    total_num_characters = 0
+    resultStr = ""
+    for line in lines:
+        word = line.strip()
+
+        if should_remove_word(lang, words, word):
+            continue
+
+        words.add(word)
+
+        total_num_words += 1
+        total_num_characters += len(word)
+
+    average_word_length = total_num_characters / total_num_words
+    print(f"{lang}: {total_num_words} words collected")
+    print(f"{lang}: {average_word_length:.2f} average word length")
+
+    # create a folder for the language
+    language_directory = os.path.join(base_directory, lang)
+    if not os.path.exists(language_directory):
+        os.mkdir(language_directory)
+
+    # sort words
+    words = sorted(list(words))
+
+    # split words into groups
+    written_words = 0
+    words_per_group = 0
+    group_sizes = []
+    group_file_sizes = []
+    for group_index in range(num_groups):
+        group = []
+        i = group_index
+        while i < len(words):
+            group.append(f"{words[i]}\n")
+            i += num_groups
+            written_words += 1
+
+        group_file = os.path.join(language_directory, str(group_index))
+        with open(group_file, "w+") as f:
+            f.writelines(group)
+
+        words_per_group = len(group)
+
+        group_sizes.append(len(group))
+        group_file_size = os.path.getsize(group_file)
+        group_file_sizes.append(group_file_size)
+
+    total_language_size = sum(group_file_sizes)
+    average_group_file_size = total_language_size / len(group_file_sizes)
+    print(f"{lang}: {written_words} words written in {num_groups} groups")
+    print(f"{lang}: ~{words_per_group} words per group")
+    print(f"{lang}: {format_file_size(average_group_file_size)} average group file size")
+    print(f"{lang}: {format_file_size(total_language_size)} total language size")
+
+    return group_sizes
+
+
+def write_elm_file(language_group_sizes: Dict[str, int]):
+    language_variables = []
     exposed_variables = []
-    for lang in languages:
-        with open(languages[lang]) as f:
-            lines = f.readlines()
-
-        words = set()
-        total_num_words = 0
-        total_num_characters = 0
-        resultStr = ""
-        for index, line in enumerate(lines):
-            word = line.strip()
-
-            if should_remove_word(lang, words, word):
-                continue
-
-            words.add(word)
-
-            resultStr += f"\"{word}\"\n    , "
-            total_num_words += 1
-            total_num_characters += len(word)
-
-        # remove trailing line break and comma
-        resultStr = resultStr[:-7]
+    for lang in language_group_sizes:
+        group_sizes = language_group_sizes[lang]
+        group_sizes_str = ",\n        ".join(map(str, group_sizes))
 
         variable = f"""\
-wordList_{lang}_count : Int
-wordList_{lang}_count =
-    {total_num_words}
+    {lang}: [
+        {group_sizes_str},
+    ],"""
+        language_variables.append(variable)
 
-wordList_{lang} : List String
-wordList_{lang} =
-    [ {resultStr}
-    ]
+    language_variables_str = "\n".join(language_variables)
+    file_template = f"""\
+const groupSizes = {{
+{language_variables_str}
+}};
+
+export default groupSizes;
 """
-        exposed_variables.append(f"wordList_{lang}")
-        variables.append(variable)
 
-        average_word_length = total_num_characters / total_num_words
-        print(
-            f"{lang}: {total_num_words} words, {average_word_length} average word length")
+    with open(wordlist_js_file, "w+") as f:
+        f.write(file_template)
 
-    write_file(variables, exposed_variables)
+
+def main():
+    if os.path.exists(base_directory):
+        shutil.rmtree(base_directory)
+    os.mkdir(base_directory)
+
+    language_group_sizes = {}
+    for lang in languages:
+        print()
+        group_sizes = process_language(base_directory, languages, lang)
+        language_group_sizes[lang] = group_sizes
+
+    write_elm_file(language_group_sizes)
 
 
 if __name__ == "__main__":
