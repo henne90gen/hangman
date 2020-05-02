@@ -60,12 +60,21 @@ function decrypt(input: string): string {
     return c;
 }
 
+/**
+ * Saves the games statistics in the browsers local storage.
+ * Before saving, the data is encrypted.
+ * @param statistics
+ */
 function saveStatistics(statistics: Statistics) {
     const stringStatistics = JSON.stringify(statistics);
     const encryptedStatistics = encrypt(stringStatistics);
     localStorage.setItem('statistics', encryptedStatistics);
 }
 
+/**
+ * Loads the games statistics from the browsers local storage.
+ * After loading, the data is decrypted.
+ */
 function loadStatistics(): Statistics | null {
     const storedStatistics = localStorage.getItem('statistics');
     let parsedStatistics = null;
@@ -76,6 +85,10 @@ function loadStatistics(): Statistics | null {
     return parsedStatistics;
 }
 
+/**
+ * Checks that the loaded object has the correct language data schema.
+ * @param obj
+ */
 function schemaIsCorrect(obj: any) {
     const keys = Object.keys(obj);
     if (keys.indexOf('localGroups') === -1) {
@@ -87,7 +100,12 @@ function schemaIsCorrect(obj: any) {
     return true;
 }
 
-function getWordList(language: Language) {
+/**
+ * Loads the word list from the browsers local storage.
+ * If there is no data yet, an empty word list is generated and returned
+ * @param language
+ */
+function getWordList(language: Language): WordList {
     const wordListStr = localStorage.getItem(language);
     if (wordListStr) {
         const parsedObj = JSON.parse(wordListStr);
@@ -113,6 +131,11 @@ function getWordList(language: Language) {
     return { localGroups, remoteGroups };
 }
 
+/**
+ * Saves the given word list in the browsers local storage.
+ * @param language
+ * @param wordList
+ */
 function setWordList(language: Language, wordList: WordList) {
     try {
         localStorage.setItem(language, JSON.stringify(wordList));
@@ -121,10 +144,18 @@ function setWordList(language: Language, wordList: WordList) {
     }
 }
 
-function random(num: number) {
+/**
+ * Generates a random number between 0 (inclusive) and num (exclusive).
+ * @param num
+ */
+function random(num: number): number {
     return Math.floor(Math.random() * num);
 }
 
+/**
+ * Sends a random word from the specified language to the Elm application.
+ * @param langUpper
+ */
 function getWord(langUpper: 'DE' | 'EN') {
     const language = langUpper.toLowerCase() as Language;
     const wordList = getWordList(language);
@@ -149,7 +180,7 @@ function getWord(langUpper: 'DE' | 'EN') {
     fetch(url)
         .then((response) => {
             if (!response.ok) {
-                throw 'Bad response code! ' + response.status;
+                throw 'Bad response code! (' + response.status + ')';
             }
             return response.text();
         })

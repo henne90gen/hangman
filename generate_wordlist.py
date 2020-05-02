@@ -23,6 +23,18 @@ def test_double_letter():
     assert not has_double_letter("Helo")
 
 
+def has_uppercase_letters(word: str):
+    for index, letter in enumerate(word):
+        if index != 0 and letter.isupper():
+            return True
+    return False
+
+
+def test_has_uppercase_letters():
+    assert has_uppercase_letters("AMOLED")
+    assert not has_uppercase_letters("Hello")
+
+
 def should_remove_word(lang: str, words: Set[str], word: str):
     if not word:
         return True
@@ -34,6 +46,9 @@ def should_remove_word(lang: str, words: Set[str], word: str):
         return True
 
     if has_double_letter(word):
+        return True
+
+    if has_uppercase_letters(word):
         return True
 
     if word in words:
