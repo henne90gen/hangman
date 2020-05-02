@@ -8,10 +8,10 @@ import Html.Events exposing (onClick)
 import Html.Events.Extra exposing (onChange)
 import List
 import Translations
-import TypedSvg exposing (circle, g, line, svg)
-import TypedSvg.Attributes exposing (cx, cy, height, r, stroke, strokeWidth, viewBox, visibility, width, x1, x2, y1, y2)
+import TypedSvg exposing (circle, g, line, rect, svg)
+import TypedSvg.Attributes exposing (cx, cy, height, r, stroke, strokeWidth, transform, viewBox, visibility, width, x, x1, x2, y, y1, y2)
 import TypedSvg.Core
-import TypedSvg.Types exposing (Paint(..), px)
+import TypedSvg.Types exposing (Paint(..), Transform(..), px)
 import Url
 
 
@@ -751,142 +751,149 @@ viewHangman counter =
 viewHangmanSvg : Int -> Html msg
 viewHangmanSvg counter =
     svg
-        [ viewBox 0 0 40 40
-        , width (px 400)
+        [ viewBox 0 0 36 40
+        , width (px 360)
         , height (px 400)
         ]
-        [ g [ isVisible (counter >= 10) ]
-            [ circle
-                [ cx (px 30)
-                , cy (px 10)
-                , r (px 3)
-                ]
-                []
+        [ g [ transform [ Scale 0.98 0.98, Translate 1 0.5 ] ]
+            [ viewHangmanPerson counter
             , line
                 [ x1 (px 30)
-                , y1 (px 10)
+                , y1 (px 0)
                 , x2 (px 30)
-                , y2 (px 25)
+                , y2 (px 10)
                 , strokeWidth (px 1)
-                , stroke <| Paint <| Color.rgba 0 0 0 1
+                , stroke <| Paint <| getLineColor (counter >= 9)
                 ]
                 []
             , line
-                [ x1 (px 30)
-                , y1 (px 17)
+                [ x1 (px 20)
+                , y1 (px 0)
+                , x2 (px 30.5)
+                , y2 (px 0)
+                , strokeWidth (px 1)
+                , stroke <| Paint <| getLineColor (counter >= 8)
+                ]
+                []
+            , line
+                [ x1 (px 10)
+                , y1 (px 10)
+                , x2 (px 20)
+                , y2 (px 0)
+                , strokeWidth (px 1)
+                , stroke <| Paint <| getLineColor (counter >= 7)
+                ]
+                []
+            , line
+                [ x1 (px 10)
+                , y1 (px 0)
+                , x2 (px 20.3)
+                , y2 (px 0)
+                , strokeWidth (px 1)
+                , stroke <| Paint <| getLineColor (counter >= 6)
+                ]
+                []
+            , line
+                [ x1 (px 10)
+                , y1 (px 10)
+                , x2 (px 10)
+                , y2 (px -1)
+                , strokeWidth (px 1)
+                , stroke <| Paint <| getLineColor (counter >= 5)
+                ]
+                []
+            , line
+                [ x1 (px 10)
+                , y1 (px 20)
+                , x2 (px 10)
+                , y2 (px 10)
+                , strokeWidth (px 1)
+                , stroke <| Paint <| getLineColor (counter >= 4)
+                ]
+                []
+            , line
+                [ x1 (px 10)
+                , y1 (px 30)
+                , x2 (px 10)
+                , y2 (px 20)
+                , strokeWidth (px 1)
+                , stroke <| Paint <| getLineColor (counter >= 3)
+                ]
+                []
+            , line
+                [ x1 (px -5)
+                , y1 (px 45)
+                , x2 (px 10.35)
+                , y2 (px 29.65)
+                , strokeWidth (px 1)
+                , stroke <| Paint <| getLineColor (counter >= 2)
+                ]
+                []
+            , line
+                [ x1 (px 10)
+                , y1 (px 30)
                 , x2 (px 25)
-                , y2 (px 14)
+                , y2 (px 45)
                 , strokeWidth (px 1)
-                , stroke <| Paint <| Color.rgba 0 0 0 1
-                ]
-                []
-            , line
-                [ x1 (px 30)
-                , y1 (px 17)
-                , x2 (px 35)
-                , y2 (px 14)
-                , strokeWidth (px 1)
-                , stroke <| Paint <| Color.rgba 0 0 0 1
-                ]
-                []
-            , line
-                [ x1 (px 30)
-                , y1 (px 25)
-                , x2 (px 25)
-                , y2 (px 30)
-                , strokeWidth (px 1)
-                , stroke <| Paint <| Color.rgba 0 0 0 1
-                ]
-                []
-            , line
-                [ x1 (px 30)
-                , y1 (px 25)
-                , x2 (px 35)
-                , y2 (px 30)
-                , strokeWidth (px 1)
-                , stroke <| Paint <| Color.rgba 0 0 0 1
+                , stroke <| Paint <| getLineColor (counter >= 1)
                 ]
                 []
             ]
+        ]
+
+
+viewHangmanPerson : Int -> TypedSvg.Core.Svg msg
+viewHangmanPerson counter =
+    g [ isVisible (counter >= 10) ]
+        [ circle
+            [ cx (px 30)
+            , cy (px 10)
+            , r (px 3)
+            ]
+            []
         , line
             [ x1 (px 30)
-            , y1 (px 0)
-            , x2 (px 30)
-            , y2 (px 10)
-            , strokeWidth (px 1)
-            , stroke <| Paint <| getLineColor (counter >= 9)
-            ]
-            []
-        , line
-            [ x1 (px 20)
-            , y1 (px 0)
-            , x2 (px 30)
-            , y2 (px 0)
-            , strokeWidth (px 1)
-            , stroke <| Paint <| getLineColor (counter >= 8)
-            ]
-            []
-        , line
-            [ x1 (px 10)
             , y1 (px 10)
-            , x2 (px 20)
-            , y2 (px 0)
+            , x2 (px 30)
+            , y2 (px 25)
             , strokeWidth (px 1)
-            , stroke <| Paint <| getLineColor (counter >= 7)
+            , stroke <| Paint <| Color.rgba 0 0 0 1
             ]
             []
         , line
-            [ x1 (px 10)
-            , y1 (px 0)
-            , x2 (px 20)
-            , y2 (px 0)
+            [ x1 (px 30)
+            , y1 (px 17)
+            , x2 (px 25)
+            , y2 (px 14)
             , strokeWidth (px 1)
-            , stroke <| Paint <| getLineColor (counter >= 6)
+            , stroke <| Paint <| Color.rgba 0 0 0 1
             ]
             []
         , line
-            [ x1 (px 10)
-            , y1 (px 10)
-            , x2 (px 10)
-            , y2 (px 0)
+            [ x1 (px 30)
+            , y1 (px 17)
+            , x2 (px 35)
+            , y2 (px 14)
             , strokeWidth (px 1)
-            , stroke <| Paint <| getLineColor (counter >= 5)
+            , stroke <| Paint <| Color.rgba 0 0 0 1
             ]
             []
         , line
-            [ x1 (px 10)
-            , y1 (px 20)
-            , x2 (px 10)
-            , y2 (px 10)
-            , strokeWidth (px 1)
-            , stroke <| Paint <| getLineColor (counter >= 4)
-            ]
-            []
-        , line
-            [ x1 (px 10)
-            , y1 (px 30)
-            , x2 (px 10)
-            , y2 (px 20)
-            , strokeWidth (px 1)
-            , stroke <| Paint <| getLineColor (counter >= 3)
-            ]
-            []
-        , line
-            [ x1 (px 0)
-            , y1 (px 40)
-            , x2 (px 10)
+            [ x1 (px 30)
+            , y1 (px 25)
+            , x2 (px 25)
             , y2 (px 30)
             , strokeWidth (px 1)
-            , stroke <| Paint <| getLineColor (counter >= 2)
+            , stroke <| Paint <| Color.rgba 0 0 0 1
             ]
             []
         , line
-            [ x1 (px 10)
-            , y1 (px 30)
-            , x2 (px 20)
-            , y2 (px 40)
+            [ x1 (px 30)
+            , y1 (px 25)
+            , x2 (px 35)
+            , y2 (px 30)
             , strokeWidth (px 1)
-            , stroke <| Paint <| getLineColor (counter >= 1)
+            , stroke <| Paint <| Color.rgba 0 0 0 1
             ]
             []
         ]
