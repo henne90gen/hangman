@@ -8,8 +8,8 @@ import Html.Events exposing (onClick)
 import Html.Events.Extra exposing (onChange)
 import List
 import Translations
-import TypedSvg exposing (circle, g, line, rect, svg)
-import TypedSvg.Attributes exposing (cx, cy, height, r, stroke, strokeWidth, transform, viewBox, visibility, width, x, x1, x2, y, y1, y2)
+import TypedSvg exposing (circle, g, line, svg)
+import TypedSvg.Attributes exposing (cx, cy, height, r, stroke, strokeWidth, transform, viewBox, visibility, width, x1, x2, y1, y2)
 import TypedSvg.Core
 import TypedSvg.Types exposing (Paint(..), Transform(..), px)
 import Url
