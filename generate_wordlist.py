@@ -151,7 +151,7 @@ def write_elm_file(language_group_sizes: Dict[str, int]):
         group_sizes_str = ",\n        ".join(map(str, group_sizes))
 
         variable = f"""\
-    {lang}: [
+    {lang.upper()}: [
         {group_sizes_str},
     ],"""
         language_variables.append(variable)

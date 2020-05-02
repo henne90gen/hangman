@@ -4,9 +4,11 @@ import groupSizes from './wordList';
 
 const key = 'SecretKey';
 const PUBLIC_URL = process.env.PUBLIC_URL;
+const NUM_GROUPS_PER_LANGUAGE = 15;
+const languages = ['DE', 'EN'];
 let app: MainAppType | null = null;
 
-type Language = 'de' | 'en';
+type Language = 'DE' | 'EN';
 
 type WordList = {
     localGroups: string[][];
@@ -109,19 +111,25 @@ function getWordList(language: Language): WordList {
     const wordListStr = localStorage.getItem(language);
     if (wordListStr) {
         const parsedObj = JSON.parse(wordListStr);
-        if (schemaIsCorrect(parsedObj)) {
+        if (
+            schemaIsCorrect(parsedObj) &&
+            (parsedObj as WordList).localGroups.length ===
+                NUM_GROUPS_PER_LANGUAGE &&
+            (parsedObj as WordList).remoteGroups.length ===
+                NUM_GROUPS_PER_LANGUAGE
+        ) {
             return parsedObj;
         }
         localStorage.removeItem(language);
     }
 
     const localGroups = [];
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < NUM_GROUPS_PER_LANGUAGE; i++) {
         localGroups.push([]);
     }
 
     const remoteGroups = [];
-    while (remoteGroups.length < 10) {
+    while (remoteGroups.length < NUM_GROUPS_PER_LANGUAGE) {
         const group = random(groupSizes[language].length);
         if (remoteGroups.indexOf(group) === -1) {
             remoteGroups.push(group);
@@ -152,58 +160,102 @@ function random(num: number): number {
     return Math.floor(Math.random() * num);
 }
 
+function sendRandomWordToElm(language: Language, group: string[]) {
+    const chosenWordIndex = random(group.length);
+    if (chosenWordIndex >= group.length) {
+        console.error(language + ': PANIC!', { chosenWordIndex, group });
+        return;
+    }
+
+    app?.ports.receiveWord.send([language, group[chosenWordIndex]]);
+}
+
 /**
  * Sends a random word from the specified language to the Elm application.
  * @param langUpper
  */
-function getWord(langUpper: 'DE' | 'EN') {
-    const language = langUpper.toLowerCase() as Language;
+function getWord(language: Language) {
     const wordList = getWordList(language);
     const localGroupIndex = random(wordList.localGroups.length);
     const localGroup = wordList.localGroups[localGroupIndex];
 
     if (localGroup.length !== 0) {
-        const chosenWordIndex = random(localGroup.length);
-        if (chosenWordIndex >= localGroup.length) {
-            console.error('PANIC!', { chosenWordIndex, localGroup });
-            return;
-        }
-        app?.ports.receiveWord.send([
-            language.toUpperCase(),
-            localGroup[chosenWordIndex],
-        ]);
+        sendRandomWordToElm(language, localGroup);
         return;
     }
 
     const remoteGroupIndex = wordList.remoteGroups[localGroupIndex];
-    const url = PUBLIC_URL + '/languages/' + language + '/' + remoteGroupIndex;
-    fetch(url)
-        .then((response) => {
-            if (!response.ok) {
-                throw 'Bad response code! (' + response.status + ')';
-            }
-            return response.text();
+
+    downloadGroup(language, localGroupIndex, remoteGroupIndex)
+        .then((newGroup: string[]) => {
+            sendRandomWordToElm(language, newGroup);
         })
-        .then((words) => {
-            const newGroup = words.split('\n');
-
-            wordList.localGroups[localGroupIndex] = newGroup;
-            setWordList(language, wordList);
-
-            const chosenWordIndex = random(newGroup.length);
-            if (chosenWordIndex >= newGroup.length) {
-                console.error('PANIC!', { chosenWordIndex, newGroup });
-                return;
-            }
-
-            app?.ports.receiveWord.send([
-                language.toUpperCase(),
-                newGroup[chosenWordIndex],
-            ]);
-        })
-        .catch((e) => {
-            console.error(e);
+        .catch((error) => {
+            console.error(language + ': failed to get next word.', {
+                error,
+                localGroupIndex,
+                remoteGroupIndex,
+            });
         });
+}
+
+async function downloadGroup(
+    language: Language,
+    localGroupIndex: number,
+    remoteGroupIndex: number
+) {
+    const langLower = language.toLowerCase();
+    const url = PUBLIC_URL + '/languages/' + langLower + '/' + remoteGroupIndex;
+    const response = await fetch(url);
+
+    if (!response.ok) {
+        throw 'Bad response code! (' + response.status + ')';
+    }
+
+    const words = await response.text();
+    const newGroup = words.split('\n');
+
+    // save to local storage
+    const wordList = getWordList(language);
+    wordList.localGroups[localGroupIndex] = newGroup;
+    setWordList(language, wordList);
+
+    return Promise.resolve(newGroup);
+}
+
+function downloadMissingGroups(wordList: WordList, language: Language) {
+    for (
+        let localGroupIndex = 0;
+        localGroupIndex < wordList.localGroups.length;
+        localGroupIndex++
+    ) {
+        if (wordList.localGroups[localGroupIndex].length !== 0) {
+            continue;
+        }
+
+        const remoteGroupIndex = wordList.remoteGroups[localGroupIndex];
+        downloadGroup(language, localGroupIndex, remoteGroupIndex)
+            .then(() => {
+                console.debug(language + ': downloaded group', {
+                    localGroupIndex,
+                    remoteGroupIndex,
+                });
+            })
+            .catch((error: any) => {
+                console.error(language + ': failed to pre-fetch word group.', {
+                    error,
+                    localGroupIndex,
+                    remoteGroupIndex,
+                });
+            });
+    }
+}
+
+function downloadLanguages() {
+    for (let language of languages) {
+        const wordList = getWordList(language as Language);
+        downloadMissingGroups(wordList, language as Language);
+    }
 }
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -214,6 +266,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
     app.ports.saveStatistics.subscribe(saveStatistics);
     app.ports.requestWord.subscribe(getWord);
+
+    downloadLanguages();
 });
 
 // If you want your app to work offline and load faster, you can change

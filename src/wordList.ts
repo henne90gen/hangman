@@ -1,5 +1,5 @@
 const groupSizes = {
-    de: [
+    DE: [
         7293,
         7293,
         7293,
@@ -57,7 +57,7 @@ const groupSizes = {
         7292,
         7292,
     ],
-    en: [
+    EN: [
         9383,
         9383,
         9383,

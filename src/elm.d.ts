@@ -1,5 +1,9 @@
 type MainAppType = {
-    ports: any;
+    ports: {
+        receiveWord: { send: (args: string[]) => void };
+        requestWord: any;
+        saveStatistics: any;
+    };
 };
 
 type Statistics = {
