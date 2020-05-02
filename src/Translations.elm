@@ -58,10 +58,10 @@ getNewGameText : Language -> String
 getNewGameText language =
     case language of
         DE ->
-            "Neues Spiel starten"
+            "Nächstes Wort"
 
         EN ->
-            "Start New Game"
+            "Next Word"
 
 
 getWonText : Language -> String
