@@ -1,7 +1,7 @@
 {
   "main.css": "/hangman/static/css/main.d5300901.chunk.css",
-  "main.js": "/hangman/static/js/main.a9849213.chunk.js",
-  "main.js.map": "/hangman/static/js/main.a9849213.chunk.js.map",
+  "main.js": "/hangman/static/js/main.07649635.chunk.js",
+  "main.js.map": "/hangman/static/js/main.07649635.chunk.js.map",
   "runtime~main.js": "/hangman/static/js/runtime~main.ae4486c1.js",
   "runtime~main.js.map": "/hangman/static/js/runtime~main.ae4486c1.js.map",
   "vendors~main.js": "/hangman/static/js/vendors~main.a36a6ec2.chunk.js",
@@ -87,5 +87,5 @@
   "languages/en/9": "/hangman/languages/en/9",
   "logo.svg": "/hangman/logo.svg",
   "manifest.json": "/hangman/manifest.json",
-  "precache-manifest.126388c48ba553edb6c1a07101fc0096.js": "/hangman/precache-manifest.126388c48ba553edb6c1a07101fc0096.js"
+  "precache-manifest.2aa5d6a892a776c34cdf5489d77540f3.js": "/hangman/precache-manifest.2aa5d6a892a776c34cdf5489d77540f3.js"
 }
