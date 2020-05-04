@@ -3,6 +3,7 @@ type MainAppType = {
         receiveWord: { send: (args: string[]) => void };
         requestWord: any;
         saveStatistics: any;
+        saveSettings: any;
     };
 };
 
@@ -21,8 +22,18 @@ type Statistics = {
     incorrectLettersTotal: number;
 };
 
+type Language = 'DE' | 'EN';
+
+type ColorTheme = 'LightTheme' | 'DarkTheme';
+
+type Settings = {
+    language: Language;
+    theme: ColorTheme;
+};
+
 type FlagsType = {
     statistics: Statistics | null;
+    settings: Settings | null;
 };
 
 type InitOptionsType = {

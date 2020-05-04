@@ -3,7 +3,7 @@ port module Main exposing (main)
 import Browser
 import Color
 import Html exposing (Html, a, button, div, input, label, option, select, span, table, tbody, td, text, th, thead, tr)
-import Html.Attributes exposing (class, disabled, href, target, type_, value)
+import Html.Attributes exposing (checked, class, disabled, href, target, type_, value)
 import Html.Events exposing (onClick)
 import Html.Events.Extra exposing (onChange)
 import List
@@ -33,6 +33,25 @@ type GameState
     | HasLost
 
 
+type alias GameData =
+    { shownWord : List Letter
+    , alphabet : List AlphabetLetter
+    , errorCounter : Int
+    , gameState : GameState
+    }
+
+
+type ColorTheme
+    = LightTheme
+    | DarkTheme
+
+
+type alias Settings =
+    { language : Translations.Language
+    , theme : ColorTheme
+    }
+
+
 type alias Statistics =
     { mostCorrectWordsOverall : Int
     , mostCorrectWordsCurrent : Int
@@ -49,19 +68,10 @@ type alias Statistics =
     }
 
 
-type ColorTheme
-    = LightTheme
-    | DarkTheme
-
-
 type alias Model =
-    { shownWord : List Letter
-    , alphabet : List AlphabetLetter
-    , errorCounter : Int
-    , gameState : GameState
-    , language : Translations.Language
+    { gameData : GameData
+    , settings : Settings
     , statistics : Statistics
-    , theme : ColorTheme
     }
 
 
@@ -73,8 +83,19 @@ type Msg
     | ToggleDarkMode
 
 
+type alias SettingsFlags =
+    { language : String
+    , theme : String
+    }
+
+
 type alias Flags =
-    { statistics : Maybe Statistics }
+    { statistics : Maybe Statistics
+    , settings : Maybe SettingsFlags
+    }
+
+
+port saveSettings : SettingsFlags -> Cmd msg
 
 
 port saveStatistics : Statistics -> Cmd msg
@@ -92,8 +113,12 @@ port receiveWord : (( String, String ) -> msg) -> Sub msg
 
 init : Flags -> ( Model, Cmd Msg )
 init flags =
-    ( createInitialModel flags.statistics
-    , requestWord (Translations.languageToString Translations.defaultLanguage)
+    let
+        model =
+            createInitialModel flags
+    in
+    ( model
+    , requestWord (Translations.languageToString model.settings.language)
     )
 
 
@@ -102,14 +127,22 @@ alphabetString =
     "abcdefghijklmnopqrstuvwxyzäöüß"
 
 
-createInitialModel : Maybe Statistics -> Model
-createInitialModel statistics =
-    { shownWord = []
-    , alphabet = List.map Unused (String.toList alphabetString)
-    , errorCounter = 0
-    , gameState = Playing
-    , language = Translations.defaultLanguage
-    , statistics = Maybe.withDefault emptyStatistics statistics
+createInitialModel : Flags -> Model
+createInitialModel flags =
+    { gameData =
+        { shownWord = []
+        , alphabet = List.map Unused (String.toList alphabetString)
+        , errorCounter = 0
+        , gameState = Playing
+        }
+    , settings = Maybe.withDefault defaultSettings (Maybe.map convertSettingsFlags flags.settings)
+    , statistics = Maybe.withDefault emptyStatistics flags.statistics
+    }
+
+
+defaultSettings : Settings
+defaultSettings =
+    { language = Translations.defaultLanguage
     , theme = LightTheme
     }
 
@@ -169,7 +202,7 @@ update msg model =
         NewGameButtonPressed ->
             ( model
             , Cmd.batch
-                [ requestWord (Translations.languageToString model.language)
+                [ requestWord (Translations.languageToString model.settings.language)
                 , saveStatistics model.statistics
                 ]
             )
@@ -185,11 +218,17 @@ update msg model =
             let
                 newLanguage =
                     Translations.languageFromString newLanguageStr
+
+                newSettings =
+                    updateLanguage model.settings newLanguage
             in
-            ( { model | language = newLanguage, alphabet = List.map Disabled (String.toList alphabetString) }
+            ( { model
+                | settings = newSettings
+                , gameData = clearAlphabet model.gameData
+              }
             , Cmd.batch
                 [ requestWord (Translations.languageToString newLanguage)
-                , saveStatistics model.statistics
+                , newSettings |> convertSettings |> saveSettings
                 ]
             )
 
@@ -197,7 +236,11 @@ update msg model =
             ( startNewGame model language word, Cmd.none )
 
         ToggleDarkMode ->
-            ( { model | theme = updateTheme model.theme }, Cmd.none )
+            let
+                newSettings =
+                    updateTheme model.settings
+            in
+            ( { model | settings = newSettings }, newSettings |> convertSettings |> saveSettings )
 
 
 startNewGame : Model -> Translations.Language -> String -> Model
@@ -210,12 +253,19 @@ startNewGame model language newWord =
             Char.toLower (Maybe.withDefault ' ' (List.head characters))
     in
     { model
-        | shownWord = List.indexedMap (toLetter firstLetter) characters
-        , alphabet = createAlphabet alphabetString firstLetter
-        , errorCounter = 0
-        , gameState = Playing
-        , language = language
+        | gameData =
+            { shownWord = List.indexedMap (toLetter firstLetter) characters
+            , alphabet = createAlphabet alphabetString firstLetter
+            , errorCounter = 0
+            , gameState = Playing
+            }
+        , settings = updateLanguage model.settings language
     }
+
+
+updateLanguage : Settings -> Translations.Language -> Settings
+updateLanguage settings language =
+    { settings | language = language }
 
 
 toLetter : Char -> Int -> Char -> Letter
@@ -233,23 +283,28 @@ toLetter firstLetter index c =
 guessLetter : Model -> Char -> Model
 guessLetter model c =
     let
+        gameData =
+            model.gameData
+
         ( hasFoundLetter, newShownWord ) =
-            guessLetterShownWord model.shownWord c
+            guessLetterShownWord gameData.shownWord c
 
         newErrorCounter =
-            updateErrorCounter model.errorCounter hasFoundLetter
+            updateErrorCounter gameData.errorCounter hasFoundLetter
 
         gameState =
-            checkGameState model.gameState newShownWord newErrorCounter
+            checkGameState gameData.gameState newShownWord newErrorCounter
 
         statistics =
             updateWordHighScores model.statistics gameState
     in
     { model
-        | shownWord = newShownWord
-        , alphabet = guessLetterAlphabet model.alphabet c hasFoundLetter gameState
-        , errorCounter = newErrorCounter
-        , gameState = gameState
+        | gameData =
+            { shownWord = newShownWord
+            , alphabet = guessLetterAlphabet gameData.alphabet c hasFoundLetter gameState
+            , errorCounter = newErrorCounter
+            , gameState = gameState
+            }
         , statistics = updateLetterStatistics statistics hasFoundLetter
     }
 
@@ -443,14 +498,19 @@ updateLetterStatistics statistics hasFoundLetter =
         }
 
 
-updateTheme : ColorTheme -> ColorTheme
-updateTheme theme =
-    case theme of
+clearAlphabet : GameData -> GameData
+clearAlphabet gameData =
+    { gameData | alphabet = List.map Disabled (String.toList alphabetString) }
+
+
+updateTheme : Settings -> Settings
+updateTheme settings =
+    case settings.theme of
         DarkTheme ->
-            LightTheme
+            { settings | theme = LightTheme }
 
         LightTheme ->
-            DarkTheme
+            { settings | theme = DarkTheme }
 
 
 
@@ -468,18 +528,28 @@ subscriptions _ =
 
 view : Model -> Browser.Document Msg
 view model =
-    { title = Translations.getTitle model.language
+    let
+        language =
+            model.settings.language
+
+        theme =
+            model.settings.theme
+
+        gameData =
+            model.gameData
+    in
+    { title = Translations.getTitle language
     , body =
-        [ div [ class "h-full", getBackgroundColor model.theme ]
+        [ div [ class "h-full", getBackgroundColor theme ]
             [ div [ class "py-2" ]
-                [ viewNewGameButton model.language model.theme
-                , viewLanguageSelect model.theme
-                , viewDarkModeSwitch model.theme
+                [ viewNewGameButton language theme
+                , viewLanguageSelect language theme
+                , viewDarkModeSwitch theme
                 ]
-            , viewWord model.shownWord model.gameState model.language model.theme
-            , viewAlphabet model.alphabet model.theme
-            , viewGameOverText model.gameState model.language model.theme
-            , viewHangmanAndStatistics model.errorCounter model.statistics model.language model.theme
+            , viewWord gameData.shownWord gameData.gameState language theme
+            , viewAlphabet gameData.alphabet theme
+            , viewGameOverText gameData.gameState language theme
+            , viewHangmanAndStatistics gameData.errorCounter model.statistics language theme
             ]
         ]
     }
@@ -499,8 +569,8 @@ viewNewGameButton language theme =
         [ text (Translations.getNewGameText language) ]
 
 
-viewLanguageSelect : ColorTheme -> Html Msg
-viewLanguageSelect theme =
+viewLanguageSelect : Translations.Language -> ColorTheme -> Html Msg
+viewLanguageSelect language theme =
     select
         ([ class "appearance-none"
          , class "border"
@@ -510,6 +580,7 @@ viewLanguageSelect theme =
          , class "leading-tight"
          , class "focus:outline-none"
          , onChange ChangeLanguage
+         , value <| Translations.languageToString language
          ]
             ++ getLanguageSelectColor theme
         )
@@ -520,6 +591,15 @@ viewLanguageSelect theme =
 
 viewDarkModeSwitch : ColorTheme -> Html Msg
 viewDarkModeSwitch theme =
+    let
+        isChecked =
+            case theme of
+                DarkTheme ->
+                    True
+
+                LightTheme ->
+                    False
+    in
     div
         [ class "ml-5"
         , class "content-center"
@@ -533,7 +613,7 @@ viewDarkModeSwitch theme =
         ]
         [ label
             [ class "switch" ]
-            [ input [ type_ "checkbox", onClick ToggleDarkMode ] []
+            [ input [ type_ "checkbox", checked isChecked, onClick ToggleDarkMode ] []
             , span [ class "slider" ] []
             ]
         ]
@@ -1184,3 +1264,43 @@ getStatisticsTextColor theme =
 
         LightTheme ->
             class "text-black"
+
+
+convertSettings : Settings -> SettingsFlags
+convertSettings settings =
+    let
+        convertedLanguage =
+            Translations.languageToString settings.language
+
+        convertedTheme =
+            case settings.theme of
+                DarkTheme ->
+                    "DarkTheme"
+
+                LightTheme ->
+                    "LightTheme"
+    in
+    { language = convertedLanguage
+    , theme = convertedTheme
+    }
+
+
+convertSettingsFlags : SettingsFlags -> Settings
+convertSettingsFlags settingsFlags =
+    let
+        convertedLanguage =
+            Translations.languageFromString settingsFlags.language
+
+        convertedTheme =
+            if settingsFlags.theme == "DarkTheme" then
+                DarkTheme
+
+            else if settingsFlags.theme == "LightTheme" then
+                LightTheme
+
+            else
+                LightTheme
+    in
+    { language = convertedLanguage
+    , theme = convertedTheme
+    }

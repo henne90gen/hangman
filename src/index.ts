@@ -8,8 +8,6 @@ const NUM_GROUPS_PER_LANGUAGE = 15;
 const languages = ['DE', 'EN'];
 let app: MainAppType | null = null;
 
-type Language = 'DE' | 'EN';
-
 type WordList = {
     localGroups: string[][];
     remoteGroups: number[];
@@ -258,13 +256,28 @@ function downloadLanguages() {
     }
 }
 
+function loadSettings(): Settings | null {
+    const storedSettings = localStorage.getItem('settings');
+    let parsedSettings = null;
+    if (storedSettings) {
+        parsedSettings = JSON.parse(storedSettings);
+    }
+    return parsedSettings;
+}
+
+function saveSettings(settings: Settings) {
+    const stringSettings = JSON.stringify(settings);
+    localStorage.setItem('settings', stringSettings);
+}
+
 document.addEventListener('DOMContentLoaded', function () {
     app = Elm.Main.init({
-        flags: { statistics: loadStatistics() },
+        flags: { statistics: loadStatistics(), settings: loadSettings() },
         node: document.getElementById('root'),
     });
 
     app.ports.saveStatistics.subscribe(saveStatistics);
+    app.ports.saveSettings.subscribe(saveSettings);
     app.ports.requestWord.subscribe(getWord);
 
     downloadLanguages();
