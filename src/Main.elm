@@ -101,6 +101,11 @@ port saveSettings : SettingsFlags -> Cmd msg
 port saveStatistics : Statistics -> Cmd msg
 
 
+
+-- TODO add saving of game data
+-- port saveGameData : GameData -> Cmd msg
+
+
 port requestWord : String -> Cmd msg
 
 
