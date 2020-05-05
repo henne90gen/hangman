@@ -197,6 +197,12 @@ function getWord(language: Language) {
         });
 }
 
+/**
+ * Downloads the group given by remoteGroupIndex for the given language and saves it to the give localGroupIndex.
+ * @param language
+ * @param localGroupIndex
+ * @param remoteGroupIndex
+ */
 async function downloadGroup(
     language: Language,
     localGroupIndex: number,
@@ -221,6 +227,11 @@ async function downloadGroup(
     return Promise.resolve(newGroup);
 }
 
+/**
+ * Downloads all missing groups for the specified language.
+ * @param wordList
+ * @param language
+ */
 function downloadMissingGroups(wordList: WordList, language: Language) {
     for (
         let localGroupIndex = 0;
@@ -249,6 +260,9 @@ function downloadMissingGroups(wordList: WordList, language: Language) {
     }
 }
 
+/**
+ * Downloads all missing groups for all languages.
+ */
 function downloadLanguages() {
     for (let language of languages) {
         const wordList = getWordList(language as Language);
@@ -256,6 +270,9 @@ function downloadLanguages() {
     }
 }
 
+/**
+ * Loads the settings from local storage.
+ */
 function loadSettings(): Settings | null {
     const storedSettings = localStorage.getItem('settings');
     let parsedSettings = null;
@@ -265,6 +282,10 @@ function loadSettings(): Settings | null {
     return parsedSettings;
 }
 
+/**
+ * Saves the settings to local storage.
+ * @param settings
+ */
 function saveSettings(settings: Settings) {
     const stringSettings = JSON.stringify(settings);
     localStorage.setItem('settings', stringSettings);
