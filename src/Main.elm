@@ -1062,6 +1062,8 @@ viewStatisticsPane statistics language =
                 [ th [ class "px-4", class "py-1" ] []
                 , th [ class "px-4", class "py-1" ] [ text <| Translations.getStatisticsTableHeaderCorrect language ]
                 , th [ class "px-4", class "py-1" ] [ text <| Translations.getStatisticsTableHeaderIncorrect language ]
+                , th [ class "px-4", class "py-1" ] [ text <| Translations.getStatisticsTableHeaderTotal language ]
+                , th [ class "px-4", class "py-1" ] [ text <| Translations.getStatisticsTableHeaderRatio language ]
                 ]
             ]
         , tbody []
@@ -1069,31 +1071,43 @@ viewStatisticsPane statistics language =
                 [ td [ class "px-4", class "py-1", class "text-right" ] [ text <| Translations.getWordsTotalText language ]
                 , td [ class "px-4", class "py-1" ] [ text <| String.fromInt statistics.correctWordsTotal ]
                 , td [ class "px-4", class "py-1" ] [ text <| String.fromInt statistics.incorrectWordsTotal ]
+                , td [ class "px-4", class "py-1" ] [ text <| String.fromInt (statistics.correctWordsTotal + statistics.incorrectWordsTotal) ]
+                , td [ class "px-4", class "py-1" ] [ text <| String.fromFloat <| calculateRatio statistics.correctWordsTotal statistics.incorrectWordsTotal ]
                 ]
             , tr []
                 [ td [ class "px-4", class "pb-2", class "text-right" ] [ text <| Translations.getLettersTotalText language ]
                 , td [ class "px-4", class "pb-2" ] [ text <| String.fromInt statistics.correctLettersTotal ]
                 , td [ class "px-4", class "pb-2" ] [ text <| String.fromInt statistics.incorrectLettersTotal ]
+                , td [ class "px-4", class "pb-2" ] [ text <| String.fromInt (statistics.correctLettersTotal + statistics.incorrectLettersTotal) ]
+                , td [ class "px-4", class "pb-2" ] [ text <| String.fromFloat <| calculateRatio statistics.correctLettersTotal statistics.incorrectLettersTotal ]
                 ]
             , tr []
                 [ td [ class "px-4", class "pt-2", class "text-right" ] [ text <| Translations.getCurrentWordStreakText language ]
                 , td [ class "px-4", class "pt-2" ] [ text <| String.fromInt statistics.mostCorrectWordsCurrent ]
                 , td [ class "px-4", class "pt-2" ] [ text <| String.fromInt statistics.mostIncorrectWordsCurrent ]
+                , td [ class "px-4", class "pt-2" ] [ text <| String.fromInt (statistics.mostCorrectWordsCurrent + statistics.mostIncorrectWordsCurrent) ]
+                , td [ class "px-4", class "pt-2" ] [ text <| String.fromFloat <| calculateRatio statistics.mostCorrectWordsCurrent statistics.mostIncorrectWordsCurrent ]
                 ]
             , tr []
                 [ td [ class "px-4", class "pb-2", class "text-right" ] [ text <| Translations.getBestWordStreakText language ]
                 , td [ class "px-4", class "pb-2" ] [ text <| String.fromInt statistics.mostCorrectWordsOverall ]
                 , td [ class "px-4", class "pb-2" ] [ text <| String.fromInt statistics.mostIncorrectWordsOverall ]
+                , td [ class "px-4", class "pt-2" ] [ text <| String.fromInt (statistics.mostCorrectWordsOverall + statistics.mostIncorrectWordsOverall) ]
+                , td [ class "px-4", class "pt-2" ] [ text <| String.fromFloat <| calculateRatio statistics.mostCorrectWordsOverall statistics.mostIncorrectWordsOverall ]
                 ]
             , tr []
                 [ td [ class "px-4", class "pt-2", class "text-right" ] [ text <| Translations.getCurrentLetterStreakText language ]
                 , td [ class "px-4", class "pt-2" ] [ text <| String.fromInt statistics.mostCorrectLettersCurrent ]
                 , td [ class "px-4", class "pt-2" ] [ text <| String.fromInt statistics.mostIncorrectLettersCurrent ]
+                , td [ class "px-4", class "pt-2" ] [ text <| String.fromInt (statistics.mostCorrectLettersCurrent + statistics.mostIncorrectLettersCurrent) ]
+                , td [ class "px-4", class "pt-2" ] [ text <| String.fromFloat <| calculateRatio statistics.mostCorrectLettersCurrent statistics.mostIncorrectLettersCurrent ]
                 ]
             , tr []
                 [ td [ class "px-4", class "text-right" ] [ text <| Translations.getBestLetterStreakText language ]
                 , td [ class "px-4" ] [ text <| String.fromInt statistics.mostCorrectLettersOverall ]
                 , td [ class "px-4" ] [ text <| String.fromInt statistics.mostIncorrectLettersOverall ]
+                , td [ class "px-4" ] [ text <| String.fromInt (statistics.mostCorrectLettersOverall + statistics.mostIncorrectLettersOverall) ]
+                , td [ class "px-4" ] [ text <| String.fromFloat <| calculateRatio statistics.mostCorrectLettersOverall statistics.mostIncorrectLettersOverall ]
                 ]
             ]
         ]
@@ -1309,6 +1323,19 @@ getStatisticsTextColor theme =
 
         LightTheme ->
             class "text-black"
+
+
+calculateRatio : Int -> Int -> Float
+calculateRatio i1 i2 =
+    let
+        ratio =
+            toFloat i1 / toFloat i2
+    in
+    if isInfinite ratio then
+        0
+
+    else
+        ratio
 
 
 convertSettings : Settings -> SettingsFlags

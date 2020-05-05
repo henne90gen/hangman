@@ -192,3 +192,23 @@ getStatisticsTableHeaderIncorrect language =
 
         EN ->
             "Incorrect"
+
+
+getStatisticsTableHeaderTotal : Language -> String
+getStatisticsTableHeaderTotal language =
+    case language of
+        DE ->
+            "Summe"
+
+        EN ->
+            "Total"
+
+
+getStatisticsTableHeaderRatio : Language -> String
+getStatisticsTableHeaderRatio language =
+    case language of
+        DE ->
+            "Verhältnis"
+
+        EN ->
+            "Ratio"
