@@ -89,9 +89,30 @@ type alias SettingsFlags =
     }
 
 
+type alias LetterFlags =
+    { shown : Bool
+    , letter : String
+    }
+
+
+type alias AlphabetLetterFlags =
+    { state : String
+    , letter : String
+    }
+
+
+type alias GameDataFlags =
+    { shownWord : List LetterFlags
+    , alphabet : List AlphabetLetterFlags
+    , errorCounter : Int
+    , gameState : String
+    }
+
+
 type alias Flags =
     { statistics : Maybe Statistics
     , settings : Maybe SettingsFlags
+    , gameData : Maybe GameDataFlags
     }
 
 
@@ -101,9 +122,7 @@ port saveSettings : SettingsFlags -> Cmd msg
 port saveStatistics : Statistics -> Cmd msg
 
 
-
--- TODO add saving of game data
--- port saveGameData : GameData -> Cmd msg
+port saveGameData : GameDataFlags -> Cmd msg
 
 
 port requestWord : String -> Cmd msg
@@ -121,10 +140,18 @@ init flags =
     let
         model =
             createInitialModel flags
+
+        alreadyHasWord =
+            List.length model.gameData.shownWord > 0
+
+        cmd =
+            if alreadyHasWord then
+                Cmd.none
+
+            else
+                requestWord (Translations.languageToString model.settings.language)
     in
-    ( model
-    , requestWord (Translations.languageToString model.settings.language)
-    )
+    ( model, cmd )
 
 
 alphabetString : String
@@ -134,14 +161,18 @@ alphabetString =
 
 createInitialModel : Flags -> Model
 createInitialModel flags =
-    { gameData =
-        { shownWord = []
-        , alphabet = List.map Unused (String.toList alphabetString)
-        , errorCounter = 0
-        , gameState = Playing
-        }
+    { gameData = Maybe.withDefault emptyGameData (Maybe.map convertGameDataFlags flags.gameData)
     , settings = Maybe.withDefault defaultSettings (Maybe.map convertSettingsFlags flags.settings)
     , statistics = Maybe.withDefault emptyStatistics flags.statistics
+    }
+
+
+emptyGameData : GameData
+emptyGameData =
+    { shownWord = []
+    , alphabet = List.map Unused (String.toList alphabetString)
+    , errorCounter = 0
+    , gameState = Playing
     }
 
 
@@ -208,7 +239,7 @@ update msg model =
             ( model
             , Cmd.batch
                 [ requestWord (Translations.languageToString model.settings.language)
-                , saveStatistics model.statistics
+                , model.gameData |> convertGameData |> saveGameData
                 ]
             )
 
@@ -217,7 +248,12 @@ update msg model =
                 newModel =
                     guessLetter model letter
             in
-            ( newModel, saveStatistics newModel.statistics )
+            ( newModel
+            , Cmd.batch
+                [ newModel.gameData |> convertGameData |> saveGameData
+                , saveStatistics newModel.statistics
+                ]
+            )
 
         ChangeLanguage newLanguageStr ->
             let
@@ -238,7 +274,11 @@ update msg model =
             )
 
         GotWord language word ->
-            ( startNewGame model language word, Cmd.none )
+            let
+                newModel =
+                    startNewGame model language word
+            in
+            ( newModel, newModel.gameData |> convertGameData |> saveGameData )
 
         ToggleDarkMode ->
             let
@@ -1291,16 +1331,16 @@ convertSettings settings =
 
 
 convertSettingsFlags : SettingsFlags -> Settings
-convertSettingsFlags settingsFlags =
+convertSettingsFlags flags =
     let
         convertedLanguage =
-            Translations.languageFromString settingsFlags.language
+            Translations.languageFromString flags.language
 
         convertedTheme =
-            if settingsFlags.theme == "DarkTheme" then
+            if flags.theme == "DarkTheme" then
                 DarkTheme
 
-            else if settingsFlags.theme == "LightTheme" then
+            else if flags.theme == "LightTheme" then
                 LightTheme
 
             else
@@ -1309,3 +1349,120 @@ convertSettingsFlags settingsFlags =
     { language = convertedLanguage
     , theme = convertedTheme
     }
+
+
+convertGameData : GameData -> GameDataFlags
+convertGameData gameData =
+    let
+        convertedWord =
+            List.map convertLetter gameData.shownWord
+
+        convertedAlphabet =
+            List.map convertAlphabetLetter gameData.alphabet
+
+        convertedGameState =
+            case gameData.gameState of
+                Playing ->
+                    "Playing"
+
+                HasWon ->
+                    "HasWon"
+
+                HasLost ->
+                    "HasLost"
+    in
+    { shownWord = convertedWord
+    , alphabet = convertedAlphabet
+    , errorCounter = gameData.errorCounter
+    , gameState = convertedGameState
+    }
+
+
+convertLetter : Letter -> LetterFlags
+convertLetter letter =
+    case letter of
+        Shown c ->
+            { shown = True, letter = String.fromList [ c ] }
+
+        Hidden c ->
+            { shown = False, letter = String.fromList [ c ] }
+
+
+convertAlphabetLetter : AlphabetLetter -> AlphabetLetterFlags
+convertAlphabetLetter letter =
+    case letter of
+        Unused c ->
+            { state = "Unused", letter = String.fromList [ c ] }
+
+        CorrectlyUsed c ->
+            { state = "CorrectlyUsed", letter = String.fromList [ c ] }
+
+        IncorrectlyUsed c ->
+            { state = "IncorrectlyUsed", letter = String.fromList [ c ] }
+
+        Disabled c ->
+            { state = "Disabled", letter = String.fromList [ c ] }
+
+
+convertGameDataFlags : GameDataFlags -> GameData
+convertGameDataFlags flags =
+    let
+        convertedWord =
+            List.map convertLetterFlags flags.shownWord
+
+        convertedAlphabet =
+            List.map convertAlphabetLetterFlags flags.alphabet
+
+        convertedGameState =
+            if flags.gameState == "Playing" then
+                Playing
+
+            else if flags.gameState == "HasWon" then
+                HasWon
+
+            else if flags.gameState == "HasLost" then
+                HasLost
+
+            else
+                Playing
+    in
+    { shownWord = convertedWord
+    , alphabet = convertedAlphabet
+    , errorCounter = flags.errorCounter
+    , gameState = convertedGameState
+    }
+
+
+convertLetterFlags : LetterFlags -> Letter
+convertLetterFlags letter =
+    if letter.shown then
+        Shown <| convertStringToChar <| letter.letter
+
+    else
+        Hidden <| convertStringToChar <| letter.letter
+
+
+convertAlphabetLetterFlags : AlphabetLetterFlags -> AlphabetLetter
+convertAlphabetLetterFlags letter =
+    if letter.state == "Unused" then
+        Unused <| convertStringToChar <| letter.letter
+
+    else if letter.state == "CorrectlyUsed" then
+        CorrectlyUsed <| convertStringToChar <| letter.letter
+
+    else if letter.state == "IncorrectlyUsed" then
+        IncorrectlyUsed <| convertStringToChar <| letter.letter
+
+    else if letter.state == "Disabled" then
+        Disabled <| convertStringToChar <| letter.letter
+
+    else
+        Unused <| convertStringToChar <| letter.letter
+
+
+convertStringToChar : String -> Char
+convertStringToChar str =
+    str
+        |> String.toList
+        |> List.head
+        |> Maybe.withDefault ' '

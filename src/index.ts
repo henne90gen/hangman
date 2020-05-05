@@ -1,8 +1,8 @@
 import './main.css';
 import { Elm } from './Main.elm';
 import groupSizes from './wordList';
+import { encrypt, decrypt } from './crypto';
 
-const key = 'SecretKey';
 const PUBLIC_URL = process.env.PUBLIC_URL;
 const NUM_GROUPS_PER_LANGUAGE = 15;
 const languages = ['DE', 'EN'];
@@ -12,53 +12,6 @@ type WordList = {
     localGroups: string[][];
     remoteGroups: number[];
 };
-
-/**
- * Encrypts a string to a hexadecimal number using the XOR cipher
- */
-function encrypt(input: string): string {
-    let c = '';
-    let privateKey = key;
-    while (privateKey.length < input.length) {
-        privateKey += key;
-    }
-    for (let i = 0; i < input.length; i++) {
-        const value1 = input[i].charCodeAt(0);
-        const value2 = privateKey[i].charCodeAt(0);
-
-        const xorValue = value1 ^ value2;
-
-        let xorValueAsHexString = xorValue.toString(16);
-
-        if (xorValueAsHexString.length < 2) {
-            xorValueAsHexString = '0' + xorValueAsHexString;
-        }
-
-        c += xorValueAsHexString;
-    }
-    return c;
-}
-
-/**
- * Decrypts a string of hexadecimal numbers using the XOR cipher
- */
-function decrypt(input: string): string {
-    let c = '';
-    let privateKey = key;
-    while (privateKey.length < input.length / 2) {
-        privateKey += key;
-    }
-
-    for (let i = 0; i < input.length; i += 2) {
-        const hexValueString = input.substring(i, i + 2);
-        const value1 = parseInt(hexValueString, 16);
-        const value2 = privateKey.charCodeAt(i / 2);
-
-        const xorValue = value1 ^ value2;
-        c += String.fromCharCode(xorValue);
-    }
-    return c;
-}
 
 /**
  * Saves the games statistics in the browsers local storage.
@@ -158,6 +111,11 @@ function random(num: number): number {
     return Math.floor(Math.random() * num);
 }
 
+/**
+ * Sends a random word from the given group to the Elm application.
+ * @param language
+ * @param group
+ */
 function sendRandomWordToElm(language: Language, group: string[]) {
     const chosenWordIndex = random(group.length);
     if (chosenWordIndex >= group.length) {
@@ -291,14 +249,47 @@ function saveSettings(settings: Settings) {
     localStorage.setItem('settings', stringSettings);
 }
 
+/**
+ * Saves the games data in the browsers local storage.
+ * Before saving, the data is encrypted.
+ * @param gameData
+ */
+function saveGameData(gameData: GameData) {
+    const stringGameData = JSON.stringify(gameData);
+    const encryptedGameData = encrypt(stringGameData);
+    localStorage.setItem('gameData', encryptedGameData);
+}
+
+/**
+ * Loads the games data from the browsers local storage.
+ * After loading, the data is decrypted.
+ */
+function loadGameData(): GameData | null {
+    const storedGameData = localStorage.getItem('gameData');
+    let parsedGameData = null;
+    if (storedGameData) {
+        const decryptedGameData = decrypt(storedGameData);
+        try {
+            parsedGameData = JSON.parse(decryptedGameData);
+        } catch (error) {
+            console.warn('Could not load game data.', error);
+        }
+    }
+    return parsedGameData;
+}
+
 document.addEventListener('DOMContentLoaded', function () {
+    const statistics = loadStatistics();
+    const settings = loadSettings();
+    const gameData = loadGameData();
     app = Elm.Main.init({
-        flags: { statistics: loadStatistics(), settings: loadSettings() },
+        flags: { statistics, settings, gameData },
         node: document.getElementById('root'),
     });
 
     app.ports.saveStatistics.subscribe(saveStatistics);
     app.ports.saveSettings.subscribe(saveSettings);
+    app.ports.saveGameData.subscribe(saveGameData);
     app.ports.requestWord.subscribe(getWord);
 
     downloadLanguages();

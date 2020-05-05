@@ -4,6 +4,7 @@ type MainAppType = {
         requestWord: any;
         saveStatistics: any;
         saveSettings: any;
+        saveGameData: any;
     };
 };
 
@@ -31,9 +32,12 @@ type Settings = {
     theme: ColorTheme;
 };
 
+type GameData = {};
+
 type FlagsType = {
     statistics: Statistics | null;
     settings: Settings | null;
+    gameData: GameData | null;
 };
 
 type InitOptionsType = {
