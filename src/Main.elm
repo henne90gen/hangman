@@ -1073,11 +1073,11 @@ viewStatisticsTableHeader : Translations.Language -> Html msg
 viewStatisticsTableHeader language =
     thead []
         [ tr []
-            [ th [ class "px-0 sm:px-1 md:px-2 lg:px-4 xl:px-4", class "py-1" ] []
-            , th [ class "px-0 sm:px-1 md:px-2 lg:px-4 xl:px-4", class "py-1" ] (viewAlternateText Translations.getStatisticsTableHeaderCorrect language)
-            , th [ class "px-0 sm:px-1 md:px-2 lg:px-4 xl:px-4", class "py-1" ] (viewAlternateText Translations.getStatisticsTableHeaderIncorrect language)
-            , th [ class "px-0 sm:px-1 md:px-2 lg:px-4 xl:px-4", class "py-1" ] (viewAlternateText Translations.getStatisticsTableHeaderTotal language)
-            , th [ class "px-0 sm:px-1 md:px-2 lg:px-4 xl:px-4", class "py-1" ] (viewAlternateText Translations.getStatisticsTableHeaderRatio language)
+            [ th [ class "px-0 sm:px-2 lg:px-4", class "py-1" ] []
+            , th [ class "px-0 sm:px-2 lg:px-4", class "py-1" ] (viewAlternateText Translations.getStatisticsTableHeaderCorrect language)
+            , th [ class "px-0 sm:px-2 lg:px-4", class "py-1" ] (viewAlternateText Translations.getStatisticsTableHeaderIncorrect language)
+            , th [ class "px-0 sm:px-2 lg:px-4", class "py-1" ] (viewAlternateText Translations.getStatisticsTableHeaderTotal language)
+            , th [ class "px-0 sm:px-2 lg:px-4", class "py-1" ] (viewAlternateText Translations.getStatisticsTableHeaderRatio language)
             ]
         ]
 
@@ -1085,66 +1085,66 @@ viewStatisticsTableHeader language =
 viewStatisticsWords : Statistics -> Translations.Language -> Html msg
 viewStatisticsWords statistics language =
     tr []
-        [ td [ class "px-4", class "py-1", class "text-right" ] [ span [] [ text <| Translations.getWordsTotalText language ] ]
-        , td [ class "px-4", class "py-1" ] [ text <| String.fromInt statistics.correctWordsTotal ]
-        , td [ class "px-4", class "py-1" ] [ text <| String.fromInt statistics.incorrectWordsTotal ]
-        , td [ class "px-4", class "py-1" ] [ text <| String.fromInt (statistics.correctWordsTotal + statistics.incorrectWordsTotal) ]
-        , td [ class "px-4", class "py-1" ] [ text <| Round.round 2 <| calculateRatio statistics.correctWordsTotal statistics.incorrectWordsTotal ]
+        [ td [ class "px-2", class "py-1", class "text-right" ] [ span [] [ text <| Translations.getWordsTotalText language ] ]
+        , td [ class "px-2", class "py-1" ] [ text <| String.fromInt statistics.correctWordsTotal ]
+        , td [ class "px-2", class "py-1" ] [ text <| String.fromInt statistics.incorrectWordsTotal ]
+        , td [ class "px-2", class "py-1" ] [ text <| String.fromInt (statistics.correctWordsTotal + statistics.incorrectWordsTotal) ]
+        , td [ class "px-2", class "py-1" ] [ text <| Round.round 2 <| calculateRatio statistics.correctWordsTotal statistics.incorrectWordsTotal ]
         ]
 
 
 viewStatisticsLetters : Statistics -> Translations.Language -> Html msg
 viewStatisticsLetters statistics language =
     tr []
-        [ td [ class "px-4", class "pb-2", class "text-right" ] (viewAlternateText Translations.getLettersTotalText language)
-        , td [ class "px-4", class "pb-2" ] [ text <| String.fromInt statistics.correctLettersTotal ]
-        , td [ class "px-4", class "pb-2" ] [ text <| String.fromInt statistics.incorrectLettersTotal ]
-        , td [ class "px-4", class "pb-2" ] [ text <| String.fromInt (statistics.correctLettersTotal + statistics.incorrectLettersTotal) ]
-        , td [ class "px-4", class "pb-2" ] [ text <| Round.round 2 <| calculateRatio statistics.correctLettersTotal statistics.incorrectLettersTotal ]
+        [ td [ class "px-2", class "pb-2", class "text-right" ] (viewAlternateText Translations.getLettersTotalText language)
+        , td [ class "px-2", class "pb-2" ] [ text <| String.fromInt statistics.correctLettersTotal ]
+        , td [ class "px-2", class "pb-2" ] [ text <| String.fromInt statistics.incorrectLettersTotal ]
+        , td [ class "px-2", class "pb-2" ] [ text <| String.fromInt (statistics.correctLettersTotal + statistics.incorrectLettersTotal) ]
+        , td [ class "px-2", class "pb-2" ] [ text <| Round.round 2 <| calculateRatio statistics.correctLettersTotal statistics.incorrectLettersTotal ]
         ]
 
 
 viewStatisticsWordSeriesCurrent : Statistics -> Translations.Language -> Html msg
 viewStatisticsWordSeriesCurrent statistics language =
     tr []
-        [ td [ class "px-4", class "pt-2", class "text-right" ] (viewAlternateText Translations.getCurrentWordStreakText language)
-        , td [ class "px-4", class "pt-2" ] [ text <| String.fromInt statistics.mostCorrectWordsCurrent ]
-        , td [ class "px-4", class "pt-2" ] [ text <| String.fromInt statistics.mostIncorrectWordsCurrent ]
-        , td [ class "px-4", class "pt-2" ] [ text <| String.fromInt (statistics.mostCorrectWordsCurrent + statistics.mostIncorrectWordsCurrent) ]
-        , td [ class "px-4", class "pt-2" ] [ text <| Round.round 2 <| calculateRatio statistics.mostCorrectWordsCurrent statistics.mostIncorrectWordsCurrent ]
+        [ td [ class "px-2", class "pt-2", class "text-right" ] (viewAlternateText Translations.getCurrentWordStreakText language)
+        , td [ class "px-2", class "pt-2" ] [ text <| String.fromInt statistics.mostCorrectWordsCurrent ]
+        , td [ class "px-2", class "pt-2" ] [ text <| String.fromInt statistics.mostIncorrectWordsCurrent ]
+        , td [ class "px-2", class "pt-2" ] [ text <| String.fromInt (statistics.mostCorrectWordsCurrent + statistics.mostIncorrectWordsCurrent) ]
+        , td [ class "px-2", class "pt-2" ] [ text <| Round.round 2 <| calculateRatio statistics.mostCorrectWordsCurrent statistics.mostIncorrectWordsCurrent ]
         ]
 
 
 viewStatisticsWordSeriesOverall : Statistics -> Translations.Language -> Html msg
 viewStatisticsWordSeriesOverall statistics language =
     tr []
-        [ td [ class "px-4", class "pb-2", class "text-right" ] (viewAlternateText Translations.getBestWordStreakText language)
-        , td [ class "px-4", class "pb-2" ] [ text <| String.fromInt statistics.mostCorrectWordsOverall ]
-        , td [ class "px-4", class "pb-2" ] [ text <| String.fromInt statistics.mostIncorrectWordsOverall ]
-        , td [ class "px-4", class "pt-2" ] [ text <| String.fromInt (statistics.mostCorrectWordsOverall + statistics.mostIncorrectWordsOverall) ]
-        , td [ class "px-4", class "pt-2" ] [ text <| Round.round 2 <| calculateRatio statistics.mostCorrectWordsOverall statistics.mostIncorrectWordsOverall ]
+        [ td [ class "px-2", class "pb-2", class "text-right" ] (viewAlternateText Translations.getBestWordStreakText language)
+        , td [ class "px-2", class "pb-2" ] [ text <| String.fromInt statistics.mostCorrectWordsOverall ]
+        , td [ class "px-2", class "pb-2" ] [ text <| String.fromInt statistics.mostIncorrectWordsOverall ]
+        , td [ class "px-2", class "pb-2" ] [ text <| String.fromInt (statistics.mostCorrectWordsOverall + statistics.mostIncorrectWordsOverall) ]
+        , td [ class "px-2", class "pb-2" ] [ text <| Round.round 2 <| calculateRatio statistics.mostCorrectWordsOverall statistics.mostIncorrectWordsOverall ]
         ]
 
 
 viewStatisticsLetterSeriesCurrent : Statistics -> Translations.Language -> Html msg
 viewStatisticsLetterSeriesCurrent statistics language =
     tr []
-        [ td [ class "px-4", class "pt-2", class "text-right" ] (viewAlternateText Translations.getCurrentLetterStreakText language)
-        , td [ class "px-4", class "pt-2" ] [ text <| String.fromInt statistics.mostCorrectLettersCurrent ]
-        , td [ class "px-4", class "pt-2" ] [ text <| String.fromInt statistics.mostIncorrectLettersCurrent ]
-        , td [ class "px-4", class "pt-2" ] [ text <| String.fromInt (statistics.mostCorrectLettersCurrent + statistics.mostIncorrectLettersCurrent) ]
-        , td [ class "px-4", class "pt-2" ] [ text <| Round.round 2 <| calculateRatio statistics.mostCorrectLettersCurrent statistics.mostIncorrectLettersCurrent ]
+        [ td [ class "px-2", class "pt-2", class "text-right" ] (viewAlternateText Translations.getCurrentLetterStreakText language)
+        , td [ class "px-2", class "pt-2" ] [ text <| String.fromInt statistics.mostCorrectLettersCurrent ]
+        , td [ class "px-2", class "pt-2" ] [ text <| String.fromInt statistics.mostIncorrectLettersCurrent ]
+        , td [ class "px-2", class "pt-2" ] [ text <| String.fromInt (statistics.mostCorrectLettersCurrent + statistics.mostIncorrectLettersCurrent) ]
+        , td [ class "px-2", class "pt-2" ] [ text <| Round.round 2 <| calculateRatio statistics.mostCorrectLettersCurrent statistics.mostIncorrectLettersCurrent ]
         ]
 
 
 viewStatisticsLetterSeriesOverall : Statistics -> Translations.Language -> Html msg
 viewStatisticsLetterSeriesOverall statistics language =
     tr []
-        [ td [ class "px-4", class "text-right" ] (viewAlternateText Translations.getBestLetterStreakText language)
-        , td [ class "px-4" ] [ text <| String.fromInt statistics.mostCorrectLettersOverall ]
-        , td [ class "px-4" ] [ text <| String.fromInt statistics.mostIncorrectLettersOverall ]
-        , td [ class "px-4" ] [ text <| String.fromInt (statistics.mostCorrectLettersOverall + statistics.mostIncorrectLettersOverall) ]
-        , td [ class "px-4" ] [ text <| Round.round 2 <| calculateRatio statistics.mostCorrectLettersOverall statistics.mostIncorrectLettersOverall ]
+        [ td [ class "px-2", class "text-right" ] (viewAlternateText Translations.getBestLetterStreakText language)
+        , td [ class "px-2" ] [ text <| String.fromInt statistics.mostCorrectLettersOverall ]
+        , td [ class "px-2" ] [ text <| String.fromInt statistics.mostIncorrectLettersOverall ]
+        , td [ class "px-2" ] [ text <| String.fromInt (statistics.mostCorrectLettersOverall + statistics.mostIncorrectLettersOverall) ]
+        , td [ class "px-2" ] [ text <| Round.round 2 <| calculateRatio statistics.mostCorrectLettersOverall statistics.mostIncorrectLettersOverall ]
         ]
 
 
