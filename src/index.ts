@@ -222,9 +222,14 @@ function downloadMissingGroups(wordList: WordList, language: Language) {
  * Downloads all missing groups for all languages.
  */
 function downloadLanguages() {
+    let timeoutInSeconds = 1;
     for (let language of languages) {
         const wordList = getWordList(language as Language);
-        downloadMissingGroups(wordList, language as Language);
+        setTimeout(
+            () => downloadMissingGroups(wordList, language as Language),
+            1000 * timeoutInSeconds
+        );
+        timeoutInSeconds++;
     }
 }
 
