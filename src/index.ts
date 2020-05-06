@@ -191,6 +191,7 @@ async function downloadGroup(
  * @param language
  */
 function downloadMissingGroups(wordList: WordList, language: Language) {
+    let timeoutInSeconds = 1;
     for (
         let localGroupIndex = 0;
         localGroupIndex < wordList.localGroups.length;
@@ -200,21 +201,27 @@ function downloadMissingGroups(wordList: WordList, language: Language) {
             continue;
         }
 
-        const remoteGroupIndex = wordList.remoteGroups[localGroupIndex];
-        downloadGroup(language, localGroupIndex, remoteGroupIndex)
-            .then(() => {
-                console.debug(language + ': downloaded group', {
-                    localGroupIndex,
-                    remoteGroupIndex,
+        setTimeout(() => {
+            const remoteGroupIndex = wordList.remoteGroups[localGroupIndex];
+            downloadGroup(language, localGroupIndex, remoteGroupIndex)
+                .then(() => {
+                    console.debug(language + ': downloaded group', {
+                        localGroupIndex,
+                        remoteGroupIndex,
+                    });
+                })
+                .catch((error: any) => {
+                    console.error(
+                        language + ': failed to pre-fetch word group.',
+                        {
+                            error,
+                            localGroupIndex,
+                            remoteGroupIndex,
+                        }
+                    );
                 });
-            })
-            .catch((error: any) => {
-                console.error(language + ': failed to pre-fetch word group.', {
-                    error,
-                    localGroupIndex,
-                    remoteGroupIndex,
-                });
-            });
+        }, 1000 * timeoutInSeconds);
+        timeoutInSeconds++;
     }
 }
 

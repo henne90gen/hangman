@@ -1369,6 +1369,9 @@ calculateRatio i1 i2 =
     if isInfinite ratio then
         0
 
+    else if isNaN ratio then
+        0
+
     else
         ratio
 
