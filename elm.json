@@ -14,7 +14,8 @@
             "elm/url": "1.0.0",
             "elm-community/html-extra": "3.4.0",
             "elm-community/list-extra": "8.2.4",
-            "elm-community/typed-svg": "6.0.0"
+            "elm-community/typed-svg": "6.0.0",
+            "myrho/elm-round": "1.0.4"
         },
         "indirect": {
             "elm/bytes": "1.0.8",

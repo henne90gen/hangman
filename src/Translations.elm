@@ -134,6 +134,16 @@ getLettersTotalText language =
             "Letters"
 
 
+getLettersTotalTextShort : Language -> String
+getLettersTotalTextShort language =
+    case language of
+        DE ->
+            "Buchst."
+
+        EN ->
+            "Letters"
+
+
 getCurrentWordStreakText : Language -> String
 getCurrentWordStreakText language =
     case language of
@@ -142,6 +152,16 @@ getCurrentWordStreakText language =
 
         EN ->
             "Current Word Streak"
+
+
+getCurrentWordStreakTextShort : Language -> String
+getCurrentWordStreakTextShort language =
+    case language of
+        DE ->
+            "Aktuelle Worts."
+
+        EN ->
+            "Current W. Streak"
 
 
 getBestWordStreakText : Language -> String
@@ -154,6 +174,16 @@ getBestWordStreakText language =
             "Longest Word Streak"
 
 
+getBestWordStreakTextShort : Language -> String
+getBestWordStreakTextShort language =
+    case language of
+        DE ->
+            "Längste Worts."
+
+        EN ->
+            "Longest W. Streak"
+
+
 getCurrentLetterStreakText : Language -> String
 getCurrentLetterStreakText language =
     case language of
@@ -162,6 +192,16 @@ getCurrentLetterStreakText language =
 
         EN ->
             "Current Letter Streak"
+
+
+getCurrentLetterStreakTextShort : Language -> String
+getCurrentLetterStreakTextShort language =
+    case language of
+        DE ->
+            "Aktuelle Buchst.s."
+
+        EN ->
+            "Current L. Streak"
 
 
 getBestLetterStreakText : Language -> String
@@ -174,6 +214,16 @@ getBestLetterStreakText language =
             "Longest Letter Streak"
 
 
+getBestLetterStreakTextShort : Language -> String
+getBestLetterStreakTextShort language =
+    case language of
+        DE ->
+            "Längste Buchst.s."
+
+        EN ->
+            "Longest L. Streak"
+
+
 getStatisticsTableHeaderCorrect : Language -> String
 getStatisticsTableHeaderCorrect language =
     case language of
@@ -182,6 +232,16 @@ getStatisticsTableHeaderCorrect language =
 
         EN ->
             "Correct"
+
+
+getStatisticsTableHeaderCorrectShort : Language -> String
+getStatisticsTableHeaderCorrectShort language =
+    case language of
+        DE ->
+            "R"
+
+        EN ->
+            "C"
 
 
 getStatisticsTableHeaderIncorrect : Language -> String
@@ -194,6 +254,16 @@ getStatisticsTableHeaderIncorrect language =
             "Incorrect"
 
 
+getStatisticsTableHeaderIncorrectShort : Language -> String
+getStatisticsTableHeaderIncorrectShort language =
+    case language of
+        DE ->
+            "F"
+
+        EN ->
+            "I"
+
+
 getStatisticsTableHeaderTotal : Language -> String
 getStatisticsTableHeaderTotal language =
     case language of
@@ -204,6 +274,16 @@ getStatisticsTableHeaderTotal language =
             "Total"
 
 
+getStatisticsTableHeaderTotalShort : Language -> String
+getStatisticsTableHeaderTotalShort language =
+    case language of
+        DE ->
+            "S"
+
+        EN ->
+            "T"
+
+
 getStatisticsTableHeaderRatio : Language -> String
 getStatisticsTableHeaderRatio language =
     case language of
@@ -212,3 +292,13 @@ getStatisticsTableHeaderRatio language =
 
         EN ->
             "Ratio"
+
+
+getStatisticsTableHeaderRatioShort : Language -> String
+getStatisticsTableHeaderRatioShort language =
+    case language of
+        DE ->
+            "R/F"
+
+        EN ->
+            "C/I"
