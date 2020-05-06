@@ -124,181 +124,91 @@ getWordsTotalText language =
             "Words"
 
 
-getLettersTotalText : Language -> String
+getLettersTotalText : Language -> ( String, String )
 getLettersTotalText language =
     case language of
         DE ->
-            "Buchstaben"
+            ( "Buchstaben", "Buchst." )
 
         EN ->
-            "Letters"
+            ( "Letters", "Letters" )
 
 
-getLettersTotalTextShort : Language -> String
-getLettersTotalTextShort language =
-    case language of
-        DE ->
-            "Buchst."
-
-        EN ->
-            "Letters"
-
-
-getCurrentWordStreakText : Language -> String
+getCurrentWordStreakText : Language -> ( String, String )
 getCurrentWordStreakText language =
     case language of
         DE ->
-            "Aktuelle Wortserie"
+            ( "Aktuelle Wortserie", "Aktuelle Worts." )
 
         EN ->
-            "Current Word Streak"
+            ( "Current Word Streak", "Current W. Streak" )
 
 
-getCurrentWordStreakTextShort : Language -> String
-getCurrentWordStreakTextShort language =
-    case language of
-        DE ->
-            "Aktuelle Worts."
-
-        EN ->
-            "Current W. Streak"
-
-
-getBestWordStreakText : Language -> String
+getBestWordStreakText : Language -> ( String, String )
 getBestWordStreakText language =
     case language of
         DE ->
-            "Längste Wortserie"
+            ( "Längste Wortserie", "Längste Worts." )
 
         EN ->
-            "Longest Word Streak"
+            ( "Longest Word Streak", "Longest W. Streak" )
 
 
-getBestWordStreakTextShort : Language -> String
-getBestWordStreakTextShort language =
-    case language of
-        DE ->
-            "Längste Worts."
-
-        EN ->
-            "Longest W. Streak"
-
-
-getCurrentLetterStreakText : Language -> String
+getCurrentLetterStreakText : Language -> ( String, String )
 getCurrentLetterStreakText language =
     case language of
         DE ->
-            "Aktuelle Buchstabenserie"
+            ( "Aktuelle Buchstabenserie", "Aktuelle Buchst.s." )
 
         EN ->
-            "Current Letter Streak"
+            ( "Current Letter Streak", "Current L. Streak" )
 
 
-getCurrentLetterStreakTextShort : Language -> String
-getCurrentLetterStreakTextShort language =
-    case language of
-        DE ->
-            "Aktuelle Buchst.s."
-
-        EN ->
-            "Current L. Streak"
-
-
-getBestLetterStreakText : Language -> String
+getBestLetterStreakText : Language -> ( String, String )
 getBestLetterStreakText language =
     case language of
         DE ->
-            "Längste Buchstabenserie"
+            ( "Längste Buchstabenserie", "Längste Buchst.s." )
 
         EN ->
-            "Longest Letter Streak"
+            ( "Longest Letter Streak", "Longest L. Streak" )
 
 
-getBestLetterStreakTextShort : Language -> String
-getBestLetterStreakTextShort language =
-    case language of
-        DE ->
-            "Längste Buchst.s."
-
-        EN ->
-            "Longest L. Streak"
-
-
-getStatisticsTableHeaderCorrect : Language -> String
+getStatisticsTableHeaderCorrect : Language -> ( String, String )
 getStatisticsTableHeaderCorrect language =
     case language of
         DE ->
-            "Richtig"
+            ( "Richtig", "R" )
 
         EN ->
-            "Correct"
+            ( "Correct", "C" )
 
 
-getStatisticsTableHeaderCorrectShort : Language -> String
-getStatisticsTableHeaderCorrectShort language =
-    case language of
-        DE ->
-            "R"
-
-        EN ->
-            "C"
-
-
-getStatisticsTableHeaderIncorrect : Language -> String
+getStatisticsTableHeaderIncorrect : Language -> ( String, String )
 getStatisticsTableHeaderIncorrect language =
     case language of
         DE ->
-            "Falsch"
+            ( "Falsch", "F" )
 
         EN ->
-            "Incorrect"
+            ( "Incorrect", "I" )
 
 
-getStatisticsTableHeaderIncorrectShort : Language -> String
-getStatisticsTableHeaderIncorrectShort language =
-    case language of
-        DE ->
-            "F"
-
-        EN ->
-            "I"
-
-
-getStatisticsTableHeaderTotal : Language -> String
+getStatisticsTableHeaderTotal : Language -> ( String, String )
 getStatisticsTableHeaderTotal language =
     case language of
         DE ->
-            "Summe"
+            ( "Summe", "S" )
 
         EN ->
-            "Total"
+            ( "Total", "T" )
 
 
-getStatisticsTableHeaderTotalShort : Language -> String
-getStatisticsTableHeaderTotalShort language =
-    case language of
-        DE ->
-            "S"
-
-        EN ->
-            "T"
-
-
-getStatisticsTableHeaderRatio : Language -> String
+getStatisticsTableHeaderRatio : Language -> ( String, String )
 getStatisticsTableHeaderRatio language =
     case language of
         DE ->
-            "Verhältnis"
+            ( "Verhältnis", "R/F" )
 
         EN ->
-            "Ratio"
-
-
-getStatisticsTableHeaderRatioShort : Language -> String
-getStatisticsTableHeaderRatioShort language =
-    case language of
-        DE ->
-            "R/F"
-
-        EN ->
-            "C/I"
+            ( "Ratio", "C/I" )
