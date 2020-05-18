@@ -1110,8 +1110,8 @@ viewStatisticsWordSeriesCurrent statistics language =
         [ td [ class "px-2", class "pt-2", class "text-right" ] (viewAlternateText Translations.getCurrentWordStreakText language)
         , td [ class "px-2", class "pt-2" ] [ text <| String.fromInt statistics.mostCorrectWordsCurrent ]
         , td [ class "px-2", class "pt-2" ] [ text <| String.fromInt statistics.mostIncorrectWordsCurrent ]
-        , td [ class "px-2", class "pt-2" ] [ text <| String.fromInt (statistics.mostCorrectWordsCurrent + statistics.mostIncorrectWordsCurrent) ]
-        , td [ class "px-2", class "pt-2" ] [ text <| Round.round 2 <| calculateRatio statistics.mostCorrectWordsCurrent statistics.mostIncorrectWordsCurrent ]
+        , td [ class "px-2", class "pt-2" ] []
+        , td [ class "px-2", class "pt-2" ] []
         ]
 
 
@@ -1132,8 +1132,8 @@ viewStatisticsLetterSeriesCurrent statistics language =
         [ td [ class "px-2", class "pt-2", class "text-right" ] (viewAlternateText Translations.getCurrentLetterStreakText language)
         , td [ class "px-2", class "pt-2" ] [ text <| String.fromInt statistics.mostCorrectLettersCurrent ]
         , td [ class "px-2", class "pt-2" ] [ text <| String.fromInt statistics.mostIncorrectLettersCurrent ]
-        , td [ class "px-2", class "pt-2" ] [ text <| String.fromInt (statistics.mostCorrectLettersCurrent + statistics.mostIncorrectLettersCurrent) ]
-        , td [ class "px-2", class "pt-2" ] [ text <| Round.round 2 <| calculateRatio statistics.mostCorrectLettersCurrent statistics.mostIncorrectLettersCurrent ]
+        , td [ class "px-2", class "pt-2" ] []
+        , td [ class "px-2", class "pt-2" ] []
         ]
 
 
@@ -1362,18 +1362,21 @@ getStatisticsTextColor theme =
 
 calculateRatio : Int -> Int -> Float
 calculateRatio i1 i2 =
-    let
-        ratio =
-            toFloat i1 / toFloat i2
-    in
-    if isInfinite ratio then
-        0
-
-    else if isNaN ratio then
-        0
-
+    if i2 == 0 then
+        toFloat i1
     else
-        ratio
+        let
+            ratio =
+                toFloat i1 / toFloat i2
+        in
+        if isInfinite ratio then
+            0
+
+        else if isNaN ratio then
+            0
+
+        else
+            ratio
 
 
 viewAlternateText : (Translations.Language -> ( String, String )) -> Translations.Language -> List (Html msg)
