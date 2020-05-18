@@ -1364,6 +1364,7 @@ calculateRatio : Int -> Int -> Float
 calculateRatio i1 i2 =
     if i2 == 0 then
         toFloat i1
+
     else
         let
             ratio =
