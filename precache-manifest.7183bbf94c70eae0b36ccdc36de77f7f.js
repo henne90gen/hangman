@@ -4,7 +4,7 @@ self.__precacheManifest = (self.__precacheManifest || []).concat([
     "url": "/hangman/favicon.ico"
   },
   {
-    "revision": "d57707955eba5d0381792883b488c0a3",
+    "revision": "f82500192c68767cfd8194bcf3d01d7d",
     "url": "/hangman/index.html"
   },
   {
@@ -320,12 +320,12 @@ self.__precacheManifest = (self.__precacheManifest || []).concat([
     "url": "/hangman/manifest.json"
   },
   {
-    "revision": "edb40402ae1be317f1f6",
+    "revision": "914ae883734521af4889",
     "url": "/hangman/static/css/main.323e476c.chunk.css"
   },
   {
-    "revision": "edb40402ae1be317f1f6",
-    "url": "/hangman/static/js/main.edb40402.chunk.js"
+    "revision": "914ae883734521af4889",
+    "url": "/hangman/static/js/main.914ae883.chunk.js"
   },
   {
     "revision": "ae4486c1bccea49353e9",
