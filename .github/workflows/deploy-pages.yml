@@ -17,15 +17,15 @@ jobs:
                   npm install
                   npm run build
 
-            - name: Set SSH private key
-              run: echo "ssh-private-key=${{ secrets.DEPLOY_KEY }}" >> $GITHUB_ENV
+            # - name: Set SSH private key
+            #   run: echo "ssh-private-key=${{ secrets.DEPLOY_KEY }}" >> $GITHUB_ENV
 
-            - name: Install SSH Client
-              uses: webfactory/ssh-agent@v0.2.0
+            # - name: Install SSH Client
+            #   uses: webfactory/ssh-agent@v0.2.0
 
             - name: Deploy
               uses: JamesIves/github-pages-deploy-action@releases/v3
               with:
-                  SSH: true
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
                   BRANCH: gh-pages
                   FOLDER: build
