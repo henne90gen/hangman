@@ -34,6 +34,7 @@
         "elm-test": "latest-0.19.1",
         "elm-webpack-loader": "6.0.0",
         "file-loader": "1.1.11",
+        "fs-extra": "9.1.0",
         "html-webpack-plugin": "4.0.4",
         "http-proxy-middleware": "0.20.0",
         "mini-css-extract-plugin": "0.4.5",
