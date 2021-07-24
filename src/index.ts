@@ -130,7 +130,7 @@ function sendRandomWordToElm(language: Language, group: string[]) {
  * Sends a random word from the specified language to the Elm application.
  * @param langUpper
  */
-function getWord(language: Language) {
+function getWord(language: Language, useDefaultPack: boolean = true) {
     const wordList = getWordList(language);
     const localGroupIndex = random(wordList.localGroups.length);
     const localGroup = wordList.localGroups[localGroupIndex];

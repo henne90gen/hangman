@@ -2,12 +2,15 @@ port module Main exposing (main)
 
 import Browser
 import Color
+import File
 import Html exposing (Html, a, button, div, input, label, option, select, span, table, tbody, td, text, th, thead, tr)
 import Html.Attributes exposing (checked, class, disabled, href, style, target, type_, value)
 import Html.Events exposing (onClick)
 import Html.Events.Extra exposing (onChange)
-import List
-import Round exposing (round)
+import Html.Keyed
+import Json.Decode as Decode
+import Round
+import Task
 import Translations
 import TypedSvg exposing (circle, g, line, svg)
 import TypedSvg.Attributes exposing (cx, cy, height, r, stroke, strokeWidth, transform, viewBox, visibility, width, x1, x2, y1, y2)
@@ -69,10 +72,22 @@ type alias Statistics =
     }
 
 
+type alias CustomWordsFile =
+    { id : Int
+    , name : String
+    , words : List String
+    , isInUse : Bool
+    }
+
+
 type alias Model =
     { gameData : GameData
     , settings : Settings
     , statistics : Statistics
+    , fileInputIdx : Int -- NOTE this is a hack to clear the file input after uploading a file
+    , customWordFiles : List CustomWordsFile
+    , isSettingsPanelOpen : Bool
+    , useDefaultPack : Bool
     }
 
 
@@ -82,6 +97,12 @@ type Msg
     | ChangeLanguage String
     | GotWord Translations.Language String
     | ToggleDarkMode
+    | ToggleSettingsPanel
+    | ToggleUseDefaultPack
+    | GotCustomWordFiles (List File.File)
+    | GotCustomWordContent String String
+    | RemoveCustomWordsFile Int
+    | ToggleCustomFileInUse Int
 
 
 type alias SettingsFlags =
@@ -165,6 +186,10 @@ createInitialModel flags =
     { gameData = Maybe.withDefault emptyGameData (Maybe.map convertGameDataFlags flags.gameData)
     , settings = Maybe.withDefault defaultSettings (Maybe.map convertSettingsFlags flags.settings)
     , statistics = Maybe.withDefault emptyStatistics flags.statistics
+    , customWordFiles = []
+    , fileInputIdx = 0
+    , isSettingsPanelOpen = False
+    , useDefaultPack = True
     }
 
 
@@ -287,6 +312,48 @@ update msg model =
                     updateTheme model.settings
             in
             ( { model | settings = newSettings }, newSettings |> convertSettings |> saveSettings )
+
+        ToggleSettingsPanel ->
+            ( { model | isSettingsPanelOpen = not model.isSettingsPanelOpen }, Cmd.none )
+
+        ToggleUseDefaultPack ->
+            ( { model | useDefaultPack = not model.useDefaultPack }, Cmd.none )
+
+        GotCustomWordFiles files ->
+            ( model
+            , files
+                |> List.map (\f -> ( File.name f, File.toString f ))
+                |> List.map (\( n, t ) -> Task.perform (GotCustomWordContent n) t)
+                |> Cmd.batch
+            )
+
+        GotCustomWordContent fileName content ->
+            let
+                newWordLists =
+                    List.append model.customWordFiles [ CustomWordsFile model.fileInputIdx fileName (String.split "\n" content) True ]
+            in
+            ( { model
+                | fileInputIdx = model.fileInputIdx + 1
+                , customWordFiles = newWordLists
+              }
+            , Cmd.none
+            )
+
+        RemoveCustomWordsFile id ->
+            ( { model
+                | customWordFiles =
+                    List.filter (\f -> f.id /= id) model.customWordFiles
+              }
+            , Cmd.none
+            )
+
+        ToggleCustomFileInUse id ->
+            ( { model
+                | customWordFiles =
+                    List.map (updateCustomFileInUse id) model.customWordFiles
+              }
+            , Cmd.none
+            )
 
 
 startNewGame : Model -> Translations.Language -> String -> Model
@@ -559,6 +626,15 @@ updateTheme settings =
             { settings | theme = DarkTheme }
 
 
+updateCustomFileInUse : Int -> CustomWordsFile -> CustomWordsFile
+updateCustomFileInUse id file =
+    if id == file.id then
+        { file | isInUse = not file.isInUse }
+
+    else
+        file
+
+
 
 -- SUBSCRIPTIONS
 
@@ -580,25 +656,65 @@ view model =
 
         theme =
             model.settings.theme
-
-        gameData =
-            model.gameData
     in
     { title = Translations.getTitle language
     , body =
         [ div [ class "h-full", getBackgroundColor theme ]
             [ div [ class "py-2", style "margin-left" "-6rem" ]
                 [ viewNewGameButton language theme
-                , viewLanguageSelect language theme
-                , viewDarkModeSwitch theme
+                , viewSettingsButton model.isSettingsPanelOpen
                 ]
-            , viewWord gameData.shownWord gameData.gameState language theme
+            , viewActivePage model
+            ]
+        ]
+    }
+
+
+viewActivePage : Model -> Html Msg
+viewActivePage model =
+    let
+        language =
+            model.settings.language
+
+        theme =
+            model.settings.theme
+
+        customWordFiles =
+            model.customWordFiles
+
+        useDefaultPack =
+            model.useDefaultPack
+
+        fileInputIdx =
+            model.fileInputIdx
+
+        gameData =
+            model.gameData
+    in
+    if model.isSettingsPanelOpen then
+        div []
+            [ viewLanguageSelect language theme
+            , viewDarkModeSwitch theme
+            , viewCustomWordsFileUpload customWordFiles useDefaultPack fileInputIdx
+            ]
+
+    else
+        div []
+            [ viewWord gameData.shownWord gameData.gameState language theme
             , viewAlphabet gameData.alphabet theme
             , viewGameOverText gameData.gameState language theme
             , viewHangmanAndStatistics gameData.errorCounter model.statistics language theme
             ]
-        ]
-    }
+
+
+viewSettingsButton : Bool -> Html Msg
+viewSettingsButton isSettingsPanelOpen =
+    -- TODO translate
+    if isSettingsPanelOpen then
+        button [ onClick ToggleSettingsPanel, class "text-white" ] [ text "Close Settings Panel" ]
+
+    else
+        button [ onClick ToggleSettingsPanel, class "text-white" ] [ text "Open Settings Panel" ]
 
 
 viewNewGameButton : Translations.Language -> ColorTheme -> Html Msg
@@ -662,6 +778,49 @@ viewDarkModeSwitch theme =
             [ input [ type_ "checkbox", checked isChecked, onClick ToggleDarkMode ] []
             , span [ class "slider" ] []
             ]
+        ]
+
+
+viewCustomWordsFileUpload : List CustomWordsFile -> Bool -> Int -> Html Msg
+viewCustomWordsFileUpload wordLists useDefaultPack fileInputIdx =
+    Html.Keyed.node "div"
+        []
+        [ ( "file-input" ++ String.fromInt fileInputIdx
+          , input
+                [ type_ "file"
+                , Html.Attributes.multiple True
+                , Html.Events.on "change" (Decode.map GotCustomWordFiles filesDecoder)
+                , class "text-white" -- TODO adjust this according to the theme, so that the text is invisible
+                ]
+                []
+          )
+        , ( "custom-words-files"
+          , div [ class "bg-green-700" ]
+                (div [ class "text-white" ]
+                    [ input [ type_ "checkbox", checked useDefaultPack, onClick ToggleUseDefaultPack ] []
+                    , text "Use Default Pack" -- TODO translate
+                    ]
+                    :: (wordLists |> List.map viewCustomWordsFile)
+                )
+          )
+        ]
+
+
+filesDecoder : Decode.Decoder (List File.File)
+filesDecoder =
+    Decode.at [ "target", "files" ] (Decode.list File.decoder)
+
+
+viewCustomWordsFile : CustomWordsFile -> Html Msg
+viewCustomWordsFile f =
+    div [ class "text-white" ]
+        [ input [ type_ "checkbox", checked f.isInUse, onClick (ToggleCustomFileInUse f.id) ] []
+        , text f.name
+        , button
+            [ onClick (RemoveCustomWordsFile f.id)
+            , class "text-white px-2 py-1 bg-red-600"
+            ]
+            [ text "X" ]
         ]
 
 
