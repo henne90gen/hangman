@@ -23,8 +23,35 @@ function random(num: number): number {
     return Math.floor(Math.random() * num);
 }
 
-function sendWordToElm(language: Language, word: string) {
-    app?.ports.receiveWord.send([language, word]);
+/**
+ * Sends a word to Elm
+ */
+function sendWordToElm(word: string) {
+    app?.ports.receiveWord.send(word);
+}
+
+/**
+ * Sends information about all the available word packs to Elm
+ */
+async function sendWordPackInfosToElm() {
+    const infos = await createWordPackInfos();
+    app?.ports.receiveWordPackInfos.send(infos);
+}
+
+async function createWordPackInfos() {
+    const wordPacks = await db.getWordPacks();
+    const infos: WordPackInfo[] = [];
+    for (const wordPack of wordPacks) {
+        const wordCount = await db.getWordCount(wordPack);
+        infos.push({
+            id: wordPack.id,
+            language: wordPack.language,
+            isDefault: wordPack.sourceType === 'default',
+            name: wordPack.name,
+            wordCount: wordCount,
+        });
+    }
+    return infos;
 }
 
 /**
@@ -32,16 +59,12 @@ function sendWordToElm(language: Language, word: string) {
  * @param langUpper
  */
 function getWord(language: Language) {
-    console.log('getWord');
     db.getDefaultWordPack(language).then(async (wordPack) => {
-        console.log('getDefaultWordPack');
         const wordCount = await db.getWordCount(wordPack);
         const wordIndex = random(wordCount);
         const word = await db.getWord(wordPack, wordIndex);
-        console.log('gotWord:', word);
         if (word !== undefined) {
-            console.log('sending word to elm:', word.word);
-            sendWordToElm(language, word.word);
+            sendWordToElm(word.word);
             return;
         }
 
@@ -50,7 +73,7 @@ function getWord(language: Language) {
         downloadDefaultWordPackGroup(wordPack, remoteGroup)
             .then((words) => {
                 const index = random(words.length);
-                sendWordToElm(language, words[index]);
+                sendWordToElm(words[index]);
             })
             .catch((error) => {
                 console.error(language + ': failed to get next word.', {
@@ -113,6 +136,26 @@ async function downloadDefaultWordPacks() {
     }
 }
 
+async function saveFileWordPack(arg: [Language, FileWordPack]) {
+    const lang = arg[0];
+    const wp = arg[1];
+    try {
+        await db.addFileWordPack(lang, wp.name, wp.words);
+        sendWordPackInfosToElm();
+    } catch (err) {
+        // TODO send error to elm, so that it can be displayed
+    }
+}
+
+async function deleteFileWordPack(id: number) {
+    try {
+        await db.deleteFileWordPack(id);
+        sendWordPackInfosToElm();
+    } catch (err) {
+        // TODO send error to elm, so that it can be displayed
+    }
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
     await db.init();
 
@@ -130,14 +173,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     const statistics = loadStatistics();
     const settings = loadSettings();
     const gameData = loadGameData();
+    const wordPackInfos = await createWordPackInfos();
     app = Elm.Main.init({
-        flags: { statistics, settings, gameData },
+        flags: { statistics, settings, gameData, wordPackInfos },
         node: document.getElementById('root'),
     });
 
     app.ports.saveStatistics.subscribe(saveStatistics);
     app.ports.saveSettings.subscribe(saveSettings);
     app.ports.saveGameData.subscribe(saveGameData);
+    app.ports.saveFileWordPack.subscribe(saveFileWordPack);
+    app.ports.deleteFileWordPack.subscribe(deleteFileWordPack);
     app.ports.requestWord.subscribe(getWord);
 
     downloadDefaultWordPacks();

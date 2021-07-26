@@ -7,16 +7,12 @@ export type DefaultSource = {
     remoteGroups: number[];
 };
 
-export type FileSource = {
-    name: string;
-    content: string;
-};
+export type FileSource = {};
 
 export interface IWordPack {
     id?: number;
     name: string;
     created: Date;
-    description: string;
     language: Language;
     sourceType: PackSourceType;
     source: DefaultSource | FileSource;
@@ -42,11 +38,10 @@ export default class HangmanDB extends Dexie {
     words: Dexie.Table<IWord, number>;
 
     constructor() {
-        super('HangmanDB');
+        super('Hangman');
 
         this.version(1).stores({
-            wordPacks:
-                '++id,name,created,description,language,sourceType,source',
+            wordPacks: '++id,name,created,language,sourceType,source',
             words: '++id,wordPackId,word,groupIndex,index',
         });
 
@@ -62,15 +57,12 @@ export default class HangmanDB extends Dexie {
                 .equals('default')
                 .count();
             if (count === 2) {
-                console.log('Default word packs already exist');
                 return;
             }
 
-            console.log('Creating default word packs');
             this.wordPacks.bulkAdd([
                 {
                     name: 'DE',
-                    description: '', // TODO create description
                     created: new Date(),
                     language: 'DE',
                     sourceType: 'default',
@@ -81,7 +73,6 @@ export default class HangmanDB extends Dexie {
                 },
                 {
                     name: 'EN',
-                    description: '', // TODO create description
                     created: new Date(),
                     language: 'EN',
                     sourceType: 'default',
@@ -112,6 +103,11 @@ export default class HangmanDB extends Dexie {
 
     getWordPacks(): Promise<IWordPack[]> {
         return this.wordPacks.toArray();
+    }
+
+    async getWordPack(id: number): Promise<IWordPack> {
+        const obj = await this.wordPacks.where('id').equals(id).first();
+        return rejectUndefined(obj);
     }
 
     getWords(wordPack: IWordPack): Promise<IWord[]> {
@@ -147,53 +143,79 @@ export default class HangmanDB extends Dexie {
     }
 
     async addWords(words: IWord[], groupIndex?: number): Promise<void> {
-        await this.transaction(
-            'rw',
-            this.words,
-            this.wordPacks,
-            async (trans: Transaction) => {
-                if (words.length === 0) {
-                    return;
-                }
+        await this.transaction('rw', this.words, this.wordPacks, async () => {
+            if (words.length === 0) {
+                return;
+            }
 
-                let wordPackId = words[0].wordPackId;
-                for (const w of words) {
-                    if (w.wordPackId != wordPackId) {
-                        return Promise.reject();
-                    }
-                }
-
-                let index = await trans
-                    .table('words')
-                    .where('wordPackId')
-                    .equals(wordPackId)
-                    .count();
-                for (const w of words) {
-                    w.index = index;
-                    w.groupIndex = groupIndex;
-                    index++;
-                }
-
-                await this.words.bulkAdd(words);
-
-                if (groupIndex !== undefined) {
-                    const wordPack = await trans
-                        .table('wordPacks')
-                        .get(wordPackId)
-                        .then(rejectUndefined);
-                    const source = wordPack.source as DefaultSource;
-                    const idx = source.remoteGroups.findIndex(
-                        (value) => value == groupIndex
-                    );
-                    if (idx === -1) {
-                        throw 'Group ' + groupIndex + ' has already been saved';
-                    }
-                    source.remoteGroups.splice(idx, 1);
-                    source.localGroups.push(groupIndex);
-                    wordPack.source = source;
-                    await this.wordPacks.update(wordPackId, wordPack);
+            let wordPackId = words[0].wordPackId;
+            for (const w of words) {
+                if (w.wordPackId != wordPackId) {
+                    return Promise.reject();
                 }
             }
-        );
+
+            let index = await this.words
+                .where('wordPackId')
+                .equals(wordPackId)
+                .count();
+            for (const w of words) {
+                w.index = index;
+                w.groupIndex = groupIndex;
+                index++;
+            }
+
+            await this.words.bulkAdd(words);
+
+            if (groupIndex !== undefined) {
+                const wordPack = await this.wordPacks
+                    .get(wordPackId)
+                    .then(rejectUndefined);
+                const source = wordPack.source as DefaultSource;
+                const idx = source.remoteGroups.findIndex(
+                    (value) => value == groupIndex
+                );
+                if (idx === -1) {
+                    throw 'Group ' + groupIndex + ' has already been saved';
+                }
+                source.remoteGroups.splice(idx, 1);
+                source.localGroups.push(groupIndex);
+                wordPack.source = source;
+                await this.wordPacks.update(wordPackId, wordPack);
+            }
+        });
+    }
+
+    async addFileWordPack(
+        language: Language,
+        name: string,
+        words: string[]
+    ): Promise<number> {
+        return this.transaction('rw', this.wordPacks, this.words, async () => {
+            const id = await this.wordPacks.add({
+                created: new Date(),
+                language,
+                name,
+                sourceType: 'file',
+                source: {},
+            });
+
+            await this.words.bulkAdd(
+                words.map((word, index) => {
+                    return { wordPackId: id, word, index };
+                })
+            );
+            return id;
+        });
+    }
+    async deleteFileWordPack(id: number) {
+        return this.transaction('rw', this.wordPacks, this.words, async () => {
+            await this.wordPacks.delete(id);
+            const words = await this.words
+                .where('wordPackId')
+                .equals(id)
+                .toArray();
+            this.words.bulkDelete(words.map((w) => w.id));
+        });
     }
 }

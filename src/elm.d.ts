@@ -1,10 +1,20 @@
+interface Subscribe<Func> {
+    subscribe: (f: Func) => void;
+}
+interface Send<Func> {
+    send: Func;
+}
 type MainAppType = {
     ports: {
-        receiveWord: { send: (args: string[]) => void };
-        requestWord: any;
+        receiveWord: Send<(word: string) => void>;
+        receiveWordPackInfos: Send<(infos: WordPackInfo[]) => void>;
+
+        requestWord: Subscribe<(lang: Language) => void>;
         saveStatistics: any;
         saveSettings: any;
         saveGameData: any;
+        saveFileWordPack: Subscribe<(arg: [Language, FileWordPack]) => void>;
+        deleteFileWordPack: Subscribe<(id: number) => void>;
     };
 };
 
@@ -30,6 +40,7 @@ type ColorTheme = 'LightTheme' | 'DarkTheme';
 type Settings = {
     language: Language;
     theme: ColorTheme;
+    activeWordPacks: number[];
 };
 
 type GameData = {};
@@ -38,6 +49,20 @@ type FlagsType = {
     statistics: Statistics | null;
     settings: Settings | null;
     gameData: GameData | null;
+    wordPackInfos: WordPackInfo[];
+};
+
+type WordPackInfo = {
+    id: number;
+    language: Language;
+    name: string;
+    isDefault: boolean;
+    wordCount: number;
+};
+
+type FileWordPack = {
+    name: string;
+    words: string[];
 };
 
 type InitOptionsType = {

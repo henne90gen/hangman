@@ -180,4 +180,35 @@ describe('database', () => {
         const count = await db.getWordCount(wordPack);
         expect(count).toEqual(3);
     });
+
+    it('can save file word pack', async () => {
+        const db = await getNewDB();
+        const id = await db.addFileWordPack('DE', 'test.txt', [
+            'hello',
+            'world',
+        ]);
+
+        const wordPack = await db.getWordPack(id);
+        const words = await db.getWords(wordPack);
+        expect(words).toHaveLength(2);
+        expect(words[0].word).toEqual('hello');
+        expect(words[1].word).toEqual('world');
+    });
+
+    it('can delete file word pack', async () => {
+        const db = await getNewDB();
+        const id = await db.addFileWordPack('DE', 'test.txt', [
+            'hello',
+            'world',
+        ]);
+
+        await db.deleteFileWordPack(id);
+
+        await expect(async () => {
+            await db.getWordPack(id);
+        }).rejects.toBeUndefined();
+
+        const words = await db.words.where('wordPackId').equals(id).toArray();
+        expect(words).toHaveLength(0);
+    });
 });
