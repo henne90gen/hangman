@@ -31,12 +31,16 @@ function sendWordToElm(language: Language, word: string) {
  * Sends a random word from the specified language to the Elm application.
  * @param langUpper
  */
-function getWord(language: Language, useDefaultPack: boolean = true) {
+function getWord(language: Language) {
+    console.log("getWord");
     db.getDefaultWordPack(language).then(async (wordPack) => {
+        console.log("getDefaultWordPack");
         const wordCount = await db.getWordCount(wordPack);
         const wordIndex = random(wordCount);
-        const word = await db.getWord(wordPack, 0);
+        const word = await db.getWord(wordPack, wordIndex);
+        console.log("gotWord:", word);
         if (word !== undefined) {
+            console.log("sending word to elm:", word.word);
             sendWordToElm(language, word.word);
             return;
         }
