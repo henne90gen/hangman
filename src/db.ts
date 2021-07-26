@@ -62,11 +62,11 @@ export default class HangmanDB extends Dexie {
                 .equals('default')
                 .count();
             if (count === 2) {
-                console.log("Default word packs already exist");
+                console.log('Default word packs already exist');
                 return;
             }
 
-            console.log("Creating default word packs");
+            console.log('Creating default word packs');
             this.wordPacks.bulkAdd([
                 {
                     name: 'DE',
@@ -129,12 +129,13 @@ export default class HangmanDB extends Dexie {
         index: number
     ): Promise<IWord | undefined> {
         if (wordPack.id === undefined) {
-            return Promise.reject();
+            throw 'Invalid word pack!';
         }
-        return await this.words
-            .where('wordPackId')
-            .equals(wordPack.id)
-            .and((x) => x.index == index)
+
+        return this.words
+            .where('index')
+            .equals(index)
+            .and((x) => x.wordPackId == wordPack.id)
             .first();
     }
 
