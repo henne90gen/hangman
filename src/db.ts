@@ -9,13 +9,13 @@ export type DefaultSource = {
 
 export type FileSource = {
     name: string;
-    created: Date;
     content: string;
 };
 
 export interface IWordPack {
     id?: number;
     name: string;
+    created: Date;
     description: string;
     language: Language;
     sourceType: PackSourceType;
@@ -26,6 +26,7 @@ export interface IWord {
     id?: number;
     wordPackId: number;
     word: string;
+    groupIndex?: number;
     index: number; // index inside the word pack
 }
 
@@ -44,8 +45,9 @@ export default class HangmanDB extends Dexie {
         super('HangmanDB');
 
         this.version(1).stores({
-            wordPacks: '++id,name,description,language,sourceType,source',
-            words: '++id,wordPackId,word,index',
+            wordPacks:
+                '++id,name,created,description,language,sourceType,source',
+            words: '++id,wordPackId,word,groupIndex,index',
         });
 
         this.wordPacks = this.table('wordPacks');
@@ -60,13 +62,16 @@ export default class HangmanDB extends Dexie {
                 .equals('default')
                 .count();
             if (count === 2) {
-                return Promise.resolve();
+                console.log("Default word packs already exist");
+                return;
             }
 
+            console.log("Creating default word packs");
             this.wordPacks.bulkAdd([
                 {
                     name: 'DE',
                     description: '', // TODO create description
+                    created: new Date(),
                     language: 'DE',
                     sourceType: 'default',
                     source: {
@@ -77,6 +82,7 @@ export default class HangmanDB extends Dexie {
                 {
                     name: 'EN',
                     description: '', // TODO create description
+                    created: new Date(),
                     language: 'EN',
                     sourceType: 'default',
                     source: {
@@ -161,8 +167,9 @@ export default class HangmanDB extends Dexie {
                     .where('wordPackId')
                     .equals(wordPackId)
                     .count();
-                for (const w_1 of words) {
-                    w_1.index = index;
+                for (const w of words) {
+                    w.index = index;
+                    w.groupIndex = groupIndex;
                     index++;
                 }
 

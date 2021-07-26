@@ -32,15 +32,15 @@ function sendWordToElm(language: Language, word: string) {
  * @param langUpper
  */
 function getWord(language: Language) {
-    console.log("getWord");
+    console.log('getWord');
     db.getDefaultWordPack(language).then(async (wordPack) => {
-        console.log("getDefaultWordPack");
+        console.log('getDefaultWordPack');
         const wordCount = await db.getWordCount(wordPack);
         const wordIndex = random(wordCount);
         const word = await db.getWord(wordPack, wordIndex);
-        console.log("gotWord:", word);
+        console.log('gotWord:', word);
         if (word !== undefined) {
-            console.log("sending word to elm:", word.word);
+            console.log('sending word to elm:', word.word);
             sendWordToElm(language, word.word);
             return;
         }
@@ -74,18 +74,35 @@ async function downloadDefaultWordPackGroup(
 
     const content = await response.text();
     const words = content.split('\n');
-    await db.addWords(
-        words.map((w) => {
-            return { word: w, wordPackId: wordPack.id!!, index: 0 };
-        })
-    );
+    try {
+        await db.addWords(
+            words.map((w) => {
+                return { word: w, wordPackId: wordPack.id!!, index: 0 };
+            }),
+            groupIndex
+        );
+    } catch (err) {
+        // ignore, so that we can still return words
+    }
     return words;
 }
 
 async function downloadDefaultWordPack(language: Language) {
+    const MAX_LOCAL_GROUPS = 10;
     const wordPack = await db.getDefaultWordPack(language);
     const source = wordPack.source as DefaultSource;
-    for (const groupIndex of source.remoteGroups) {
+
+    const downloadCount = MAX_LOCAL_GROUPS - source.localGroups.length;
+    if (downloadCount <= 0) {
+        return;
+    }
+
+    const randomGroups = new Set<number>();
+    while (randomGroups.size < downloadCount) {
+        randomGroups.add(random(source.remoteGroups.length));
+    }
+
+    for (const groupIndex of randomGroups.values()) {
         downloadDefaultWordPackGroup(wordPack, groupIndex);
     }
 }
@@ -98,6 +115,17 @@ async function downloadDefaultWordPacks() {
 
 document.addEventListener('DOMContentLoaded', async () => {
     await db.init();
+
+    const quota = await navigator.storage.estimate();
+    const totalSpace = quota.quota / 1024 / 1024;
+    const usedSpace = quota.usage / 1024 / 1024;
+    console.log(
+        'Disk usage: ' +
+            usedSpace.toFixed(2) +
+            'MB/' +
+            totalSpace.toFixed(2) +
+            'MB'
+    );
 
     const statistics = loadStatistics();
     const settings = loadSettings();
