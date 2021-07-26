@@ -16,10 +16,11 @@ jobs:
             - name: Install and Build
               run: |
                   yarn install
-                  yarn run build
+                  yarn test-ci
+                  yarn build
 
             - name: Deploy
               uses: peaceiris/actions-gh-pages@v3
               with:
                   github_token: ${{ secrets.GITHUB_TOKEN }}
-                  publish_dir: ./build
+                  publish_dir: ./dist
