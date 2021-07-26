@@ -24,14 +24,14 @@ module.exports = {
         new webpack.DefinePlugin({
             'process.env.PUBLIC_URL': publicUrl,
         }),
-        // new webpack.HotModuleReplacementPlugin(),
+        new webpack.HotModuleReplacementPlugin(),
     ],
     output: {
         clean: true,
         pathinfo: true,
-        path: path.resolve(__dirname, 'build'),
-        filename: 'static/js/bundle.js',
-        chunkFilename: 'static/js/[name].chunk.js',
+        path: path.resolve(__dirname, 'dist'),
+        filename: 'static/js/[name].[chunkhash:8].js',
+        chunkFilename: 'static/js/[name].[chunkhash:8].chunk.js',
         publicPath: publicPath,
         devtoolModuleFilenameTemplate: (info) =>
             path.resolve(info.absoluteResourcePath).replace(/\\/g, '/'),
@@ -44,11 +44,19 @@ module.exports = {
             ignored: /node_modules/,
         },
     },
+    optimization: {
+        splitChunks: {
+            chunks: 'all',
+            name: 'vendors',
+        },
+        runtimeChunk: true,
+    },
     resolve: {
         extensions: ['.js', '.ts', '.elm'],
         modules: ['node_modules'],
     },
     module: {
+        strictExportPresence: true,
         rules: [
             {
                 test: /\.elm$/,
@@ -70,4 +78,5 @@ module.exports = {
             },
         ],
     },
+    performance: false,
 };

@@ -9,7 +9,6 @@ const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
 
 const publicUrl = 'https://henne90gen.github.io/hangman';
 const publicPath = '/hangman/';
-const appPublic = './public';
 const appHtml = './public/index.html';
 
 process.env.NODE_ENV = "production";
