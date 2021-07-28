@@ -198,7 +198,7 @@ describe('database', () => {
 
         await expect(async () => {
             await db.getWordPack(id);
-        }).rejects.toBeUndefined();
+        }).rejects.toEqual("Failed to get word pack by id: 24");
 
         const words = await db.words.where('wordPackId').equals(id).toArray();
         expect(words).toHaveLength(0);
