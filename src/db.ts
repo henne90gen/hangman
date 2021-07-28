@@ -3,6 +3,7 @@ import Dexie, { Transaction } from 'dexie';
 export type PackSourceType = 'default' | 'file';
 
 export type DefaultSource = {
+    language: Language;
     localGroups: number[];
     remoteGroups: number[];
 };
@@ -13,7 +14,6 @@ export interface IWordPack {
     id?: number;
     name: string;
     created: Date;
-    language: Language;
     sourceType: PackSourceType;
     source: DefaultSource | FileSource;
 }
@@ -26,9 +26,9 @@ export interface IWord {
     index: number; // index inside the word pack
 }
 
-async function rejectUndefined<T>(obj: T | undefined): Promise<T> {
+async function rejectUndefined<T>(msg: string, obj: T | undefined): Promise<T> {
     if (obj === undefined) {
-        return Promise.reject();
+        throw msg;
     }
     return obj;
 }
@@ -41,7 +41,7 @@ export default class HangmanDB extends Dexie {
         super('Hangman');
 
         this.version(1).stores({
-            wordPacks: '++id,name,created,language,sourceType,source',
+            wordPacks: '++id,name,created,sourceType,source',
             words: '++id,wordPackId,word,groupIndex,index',
         });
 
@@ -64,9 +64,9 @@ export default class HangmanDB extends Dexie {
                 {
                     name: 'DE',
                     created: new Date(),
-                    language: 'DE',
                     sourceType: 'default',
                     source: {
+                        language: 'DE',
                         localGroups: [],
                         remoteGroups: Array.from(Array(56).keys()),
                     },
@@ -74,9 +74,9 @@ export default class HangmanDB extends Dexie {
                 {
                     name: 'EN',
                     created: new Date(),
-                    language: 'EN',
                     sourceType: 'default',
                     source: {
+                        language: 'EN',
                         localGroups: [],
                         remoteGroups: Array.from(Array(20).keys()),
                     },
@@ -96,9 +96,12 @@ export default class HangmanDB extends Dexie {
         const obj = await this.wordPacks
             .where('sourceType')
             .equals('default')
-            .and((x) => x.language == language)
+            .and((x) => (x.source as DefaultSource).language == language)
             .first();
-        return rejectUndefined(obj);
+        return rejectUndefined(
+            'Failed to get default word pack by language: ' + language,
+            obj
+        );
     }
 
     getWordPacks(): Promise<IWordPack[]> {
@@ -107,7 +110,7 @@ export default class HangmanDB extends Dexie {
 
     async getWordPack(id: number): Promise<IWordPack> {
         const obj = await this.wordPacks.where('id').equals(id).first();
-        return rejectUndefined(obj);
+        return rejectUndefined('Failed to get word pack by id: ' + id, obj);
     }
 
     getWords(wordPack: IWordPack): Promise<IWord[]> {
@@ -168,9 +171,14 @@ export default class HangmanDB extends Dexie {
             await this.words.bulkAdd(words);
 
             if (groupIndex !== undefined) {
-                const wordPack = await this.wordPacks
-                    .get(wordPackId)
-                    .then(rejectUndefined);
+                const wordPackOrUndefined = await this.wordPacks.get(
+                    wordPackId
+                );
+                const wordPack = await rejectUndefined(
+                    'Failed to get word pack by id for updating the group index: ' +
+                        wordPackId,
+                    wordPackOrUndefined
+                );
                 const source = wordPack.source as DefaultSource;
                 const idx = source.remoteGroups.findIndex(
                     (value) => value == groupIndex
@@ -186,15 +194,10 @@ export default class HangmanDB extends Dexie {
         });
     }
 
-    async addFileWordPack(
-        language: Language,
-        name: string,
-        words: string[]
-    ): Promise<number> {
+    async addFileWordPack(name: string, words: string[]): Promise<number> {
         return this.transaction('rw', this.wordPacks, this.words, async () => {
             const id = await this.wordPacks.add({
                 created: new Date(),
-                language,
                 name,
                 sourceType: 'file',
                 source: {},

@@ -102,12 +102,13 @@ type Msg
     | GotCustomWordFiles (List File.File)
     | GotCustomWordContent String String
     | RemoveCustomWordPack Int
-    | ToggleCustomWordPackInUse Int
+    | ToggleCustomWordPackActive Int
 
 
 type alias SettingsFlags =
     { language : String
     , theme : String
+    , activeWordPacks : List Int
     }
 
 
@@ -141,7 +142,6 @@ type alias Flags =
 
 type alias WordPackInfo =
     { id : Int
-    , language : String
     , name : String
     , isDefault : Bool
     , wordCount : Int
@@ -157,7 +157,7 @@ port saveStatistics : Statistics -> Cmd msg
 port saveGameData : GameDataFlags -> Cmd msg
 
 
-port saveFileWordPack : ( String, FileWordPack ) -> Cmd msg
+port saveFileWordPack : FileWordPack -> Cmd msg
 
 
 port deleteFileWordPack : Int -> Cmd msg
@@ -202,11 +202,17 @@ alphabetString =
 
 createInitialModel : Flags -> Model
 createInitialModel flags =
-    { gameData = Maybe.withDefault emptyGameData (Maybe.map convertGameDataFlags flags.gameData)
-    , settings =
-        Maybe.withDefault
-            (defaultSettings flags)
-            (Maybe.map (convertSettingsFlags flags) flags.settings)
+    let
+        gameData =
+            Maybe.withDefault emptyGameData (Maybe.map convertGameDataFlags flags.gameData)
+
+        settings =
+            Maybe.withDefault
+                (defaultSettings flags)
+                (Maybe.map convertSettingsFlags flags.settings)
+    in
+    { gameData = gameData
+    , settings = settings
     , statistics = Maybe.withDefault emptyStatistics flags.statistics
     , wordPacks = flags.wordPackInfos
     , fileInputIdx = 0
@@ -352,22 +358,18 @@ update msg model =
 
         GotCustomWordContent fileName content ->
             ( { model | fileInputIdx = model.fileInputIdx + 1 }
-            , saveFileWordPack
-                ( Translations.languageToString model.settings.language
-                , FileWordPack fileName
-                    (content
-                        |> String.split "\n"
-                        |> List.filter String.isEmpty
-                    )
-                )
+            , saveFileWordPack (FileWordPack fileName (content |> String.split "\n" |> List.filter String.isEmpty))
             )
 
         RemoveCustomWordPack id ->
             ( model, deleteFileWordPack id )
 
-        ToggleCustomWordPackInUse id ->
-            -- TODO come up with a solution for this
-            ( model, Cmd.none )
+        ToggleCustomWordPackActive id ->
+            let
+                newSettings =
+                    toggleActiveWordPack model.settings id
+            in
+            ( { model | settings = newSettings }, saveSettings <| convertSettings <| newSettings )
 
 
 startNewGame : Model -> String -> Model
@@ -392,6 +394,41 @@ startNewGame model newWord =
 updateLanguage : Settings -> Translations.Language -> Settings
 updateLanguage settings language =
     { settings | language = language }
+
+
+toggleActiveWordPack : Settings -> Int -> Settings
+toggleActiveWordPack settings id =
+    let
+        activeWordPacks =
+            settings.activeWordPacks
+
+        isContained =
+            case
+                activeWordPacks
+                    |> List.filter (\i -> i == id)
+                    |> List.head
+            of
+                Nothing ->
+                    False
+
+                Just _ ->
+                    True
+
+        isLastId =
+            List.length activeWordPacks == 1
+
+        newActiveWordPacks =
+            if isContained then
+                if isLastId then
+                    activeWordPacks
+
+                else
+                    List.filter (\i -> i /= id) activeWordPacks
+
+            else
+                id :: activeWordPacks
+    in
+    { settings | activeWordPacks = newActiveWordPacks }
 
 
 toLetter : Char -> Int -> Char -> Letter
@@ -699,7 +736,7 @@ viewActivePage model =
         div []
             [ viewLanguageSelect language theme
             , viewDarkModeSwitch theme
-            , viewCustomWordsFileUpload wordPacks fileInputIdx
+            , viewCustomWordsFileUpload model.settings.activeWordPacks wordPacks fileInputIdx
             ]
 
     else
@@ -785,8 +822,8 @@ viewDarkModeSwitch theme =
         ]
 
 
-viewCustomWordsFileUpload : List WordPackInfo -> Int -> Html Msg
-viewCustomWordsFileUpload wordPacks fileInputIdx =
+viewCustomWordsFileUpload : List Int -> List WordPackInfo -> Int -> Html Msg
+viewCustomWordsFileUpload activeWordPacks wordPacks fileInputIdx =
     Html.Keyed.node "div"
         []
         [ ( "file-input" ++ String.fromInt fileInputIdx
@@ -800,7 +837,7 @@ viewCustomWordsFileUpload wordPacks fileInputIdx =
           )
         , ( "custom-words-files"
           , div [ class "bg-green-700" ]
-                (List.map viewWordPackInfo wordPacks)
+                (List.map (viewWordPackInfo activeWordPacks) wordPacks)
           )
         ]
 
@@ -810,11 +847,25 @@ filesDecoder =
     Decode.at [ "target", "files" ] (Decode.list File.decoder)
 
 
-viewWordPackInfo : WordPackInfo -> Html Msg
-viewWordPackInfo f =
+isWordPackActive : List Int -> WordPackInfo -> Bool
+isWordPackActive activeWordPacks wordPack =
+    case
+        activeWordPacks
+            |> List.filter (\i -> i == wordPack.id)
+            |> List.head
+    of
+        Nothing ->
+            False
+
+        Just _ ->
+            True
+
+
+viewWordPackInfo : List Int -> WordPackInfo -> Html Msg
+viewWordPackInfo activeWordPacks f =
     div [ class "text-white" ]
-        [ --  input [ type_ "checkbox", checked f.isInUse, onClick (ToggleCustomFileInUse f.id) ] [],
-          text f.name
+        [ input [ type_ "checkbox", checked (isWordPackActive activeWordPacks f), onClick (ToggleCustomWordPackActive f.id) ] []
+        , text f.name
         , button
             [ onClick (RemoveCustomWordPack f.id)
             , class "text-white px-2 py-1 bg-red-600"
@@ -1566,11 +1617,12 @@ convertSettings settings =
     in
     { language = convertedLanguage
     , theme = convertedTheme
+    , activeWordPacks = settings.activeWordPacks
     }
 
 
-convertSettingsFlags : Flags -> SettingsFlags -> Settings
-convertSettingsFlags flags settingsFlags =
+convertSettingsFlags : SettingsFlags -> Settings
+convertSettingsFlags settingsFlags =
     let
         convertedLanguage =
             Translations.languageFromString settingsFlags.language
@@ -1587,7 +1639,7 @@ convertSettingsFlags flags settingsFlags =
     in
     { language = convertedLanguage
     , theme = convertedTheme
-    , activeWordPacks = List.map .id flags.wordPackInfos
+    , activeWordPacks = settingsFlags.activeWordPacks
     }
 
 

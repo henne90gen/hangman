@@ -9,11 +9,11 @@ type MainAppType = {
         receiveWord: Send<(word: string) => void>;
         receiveWordPackInfos: Send<(infos: WordPackInfo[]) => void>;
 
-        requestWord: Subscribe<(lang: Language) => void>;
-        saveStatistics: any;
-        saveSettings: any;
-        saveGameData: any;
-        saveFileWordPack: Subscribe<(arg: [Language, FileWordPack]) => void>;
+        requestWord: Subscribe<(ids: number[]) => void>;
+        saveStatistics: Subscribe<(stats: Statistics) => void>;
+        saveSettings: Subscribe<(settings: Settings) => void>;
+        saveGameData: Subscribe<(data: GameData) => void>;
+        saveFileWordPack: Subscribe<(wp: FileWordPack) => void>;
         deleteFileWordPack: Subscribe<(id: number) => void>;
     };
 };
@@ -54,7 +54,6 @@ type FlagsType = {
 
 type WordPackInfo = {
     id: number;
-    language: Language;
     name: string;
     isDefault: boolean;
     wordCount: number;

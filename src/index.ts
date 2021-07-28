@@ -45,7 +45,6 @@ async function createWordPackInfos() {
         const wordCount = await db.getWordCount(wordPack);
         infos.push({
             id: wordPack.id,
-            language: wordPack.language,
             isDefault: wordPack.sourceType === 'default',
             name: wordPack.name,
             wordCount: wordCount,
@@ -58,36 +57,51 @@ async function createWordPackInfos() {
  * Sends a random word from the specified language to the Elm application.
  * @param langUpper
  */
-function getWord(language: Language) {
-    db.getDefaultWordPack(language).then(async (wordPack) => {
-        const wordCount = await db.getWordCount(wordPack);
-        const wordIndex = random(wordCount);
-        const word = await db.getWord(wordPack, wordIndex);
-        if (word !== undefined) {
-            sendWordToElm(word.word);
-            return;
-        }
+function getWord(ids: number[]) {
+    if (ids.length === 0) {
+        return;
+    }
+    const randomWordPackIdx = random(ids.length);
+    db.getWordPack(ids[randomWordPackIdx])
+        .then(async (wordPack) => {
+            const wordCount = await db.getWordCount(wordPack);
+            const wordIndex = random(wordCount);
+            const word = await db.getWord(wordPack, wordIndex);
+            if (word !== undefined) {
+                sendWordToElm(word.word);
+                return;
+            }
 
-        const source = wordPack.source as DefaultSource;
-        const remoteGroup = random(source.remoteGroups.length);
-        downloadDefaultWordPackGroup(wordPack, remoteGroup)
-            .then((words) => {
-                const index = random(words.length);
-                sendWordToElm(words[index]);
-            })
-            .catch((error) => {
-                console.error(language + ': failed to get next word.', {
-                    error,
+            const source = wordPack.source as DefaultSource;
+            const remoteGroup = random(source.remoteGroups.length);
+            downloadDefaultWordPackGroup(wordPack, remoteGroup)
+                .then((words) => {
+                    const index = random(words.length);
+                    sendWordToElm(words[index]);
+                })
+                .catch((error) => {
+                    console.error(
+                        randomWordPackIdx + ': failed to get next word.',
+                        {
+                            error,
+                        }
+                    );
                 });
-            });
-    });
+        })
+        .catch(() => {
+            // TODO retry with a different id?
+        });
 }
 
 async function downloadDefaultWordPackGroup(
     wordPack: IWordPack,
     groupIndex: number
 ): Promise<string[]> {
-    const langLower = wordPack.language.toLowerCase();
+    if (wordPack.sourceType != 'default') {
+        throw 'Tried to download a non-default wordpack!';
+    }
+
+    const langLower = (wordPack.source as DefaultSource).language.toLowerCase();
     const url = PUBLIC_URL + '/languages/' + langLower + '/' + groupIndex;
     const response = await fetch(url);
 
@@ -136,11 +150,9 @@ async function downloadDefaultWordPacks() {
     }
 }
 
-async function saveFileWordPack(arg: [Language, FileWordPack]) {
-    const lang = arg[0];
-    const wp = arg[1];
+async function saveFileWordPack(wp: FileWordPack) {
     try {
-        await db.addFileWordPack(lang, wp.name, wp.words);
+        await db.addFileWordPack(wp.name, wp.words);
         sendWordPackInfosToElm();
     } catch (err) {
         // TODO send error to elm, so that it can be displayed

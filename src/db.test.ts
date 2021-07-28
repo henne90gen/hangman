@@ -12,8 +12,6 @@ describe('database', () => {
         const db = await getNewDB();
         const wordPacks = await db.getWordPacks();
         expect(wordPacks).toHaveLength(2);
-        expect(wordPacks[0].language).toEqual('DE');
-        expect(wordPacks[1].language).toEqual('EN');
         for (const wordPack of wordPacks) {
             const words = await db.getWords(wordPack);
             expect(words).toHaveLength(0);
@@ -183,10 +181,7 @@ describe('database', () => {
 
     it('can save file word pack', async () => {
         const db = await getNewDB();
-        const id = await db.addFileWordPack('DE', 'test.txt', [
-            'hello',
-            'world',
-        ]);
+        const id = await db.addFileWordPack('test.txt', ['hello', 'world']);
 
         const wordPack = await db.getWordPack(id);
         const words = await db.getWords(wordPack);
@@ -197,10 +192,7 @@ describe('database', () => {
 
     it('can delete file word pack', async () => {
         const db = await getNewDB();
-        const id = await db.addFileWordPack('DE', 'test.txt', [
-            'hello',
-            'world',
-        ]);
+        const id = await db.addFileWordPack('test.txt', ['hello', 'world']);
 
         await db.deleteFileWordPack(id);
 

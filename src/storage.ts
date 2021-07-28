@@ -34,7 +34,7 @@ export function loadSettings(): Settings | null {
     if (storedSettings) {
         parsedSettings = JSON.parse(storedSettings);
     }
-    if (parsedSettings.hasOwnProperty('activeWordPacks')) {
+    if (!parsedSettings.hasOwnProperty('activeWordPacks')) {
         return null;
     }
     return parsedSettings;
@@ -45,8 +45,8 @@ export function loadSettings(): Settings | null {
  * @param settings
  */
 export function saveSettings(settings: Settings) {
-    const stringSettings = JSON.stringify(settings);
-    localStorage.setItem('settings', stringSettings);
+    const settingsStr = JSON.stringify(settings);
+    localStorage.setItem('settings', settingsStr);
 }
 
 /**
@@ -55,9 +55,9 @@ export function saveSettings(settings: Settings) {
  * @param gameData
  */
 export function saveGameData(gameData: GameData) {
-    const stringGameData = JSON.stringify(gameData);
-    const encryptedGameData = encrypt(stringGameData);
-    localStorage.setItem('gameData', encryptedGameData);
+    const gameDataStr = JSON.stringify(gameData);
+    const gameDataEncrypted = encrypt(gameDataStr);
+    localStorage.setItem('gameData', gameDataEncrypted);
 }
 
 /**
@@ -68,9 +68,9 @@ export function loadGameData(): GameData | null {
     const storedGameData = localStorage.getItem('gameData');
     let parsedGameData = null;
     if (storedGameData) {
-        const decryptedGameData = decrypt(storedGameData);
+        const gameDataDecrypted = decrypt(storedGameData);
         try {
-            parsedGameData = JSON.parse(decryptedGameData);
+            parsedGameData = JSON.parse(gameDataDecrypted);
         } catch (error) {
             console.warn('Could not load game data.', error);
         }
