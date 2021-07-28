@@ -358,11 +358,11 @@ update msg model =
 
         GotCustomWordContent fileName content ->
             ( { model | fileInputIdx = model.fileInputIdx + 1 }
-            , saveFileWordPack (FileWordPack fileName (content |> String.split "\n" |> List.filter String.isEmpty))
+            , saveFileWordPack (FileWordPack fileName (content |> String.split "\n" |> List.filter (\s -> not <| String.isEmpty s)))
             )
 
         RemoveCustomWordPack id ->
-            ( model, deleteFileWordPack id )
+            removeCustomWordPack model id
 
         ToggleCustomWordPackActive id ->
             let
@@ -674,6 +674,30 @@ updateTheme settings =
 
         LightTheme ->
             { settings | theme = DarkTheme }
+
+
+removeCustomWordPack : Model -> Int -> ( Model, Cmd msg )
+removeCustomWordPack model id =
+    let
+        settings =
+            model.settings
+
+        newActiveWordPacks =
+            List.filter (\i -> i /= id) settings.activeWordPacks
+
+        newNewActiveWordPacks =
+            if List.length newActiveWordPacks == 0 then
+                model.wordPacks
+                    |> List.filter (\wp -> wp.isDefault)
+                    |> List.map .id
+
+            else
+                newActiveWordPacks
+
+        newSettings =
+            { settings | activeWordPacks = newNewActiveWordPacks }
+    in
+    ( { model | settings = newSettings }, Cmd.batch [ deleteFileWordPack id, saveSettings <| convertSettings newSettings ] )
 
 
 

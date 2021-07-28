@@ -34,7 +34,7 @@ export function loadSettings(): Settings | null {
     if (storedSettings) {
         parsedSettings = JSON.parse(storedSettings);
     }
-    if (!parsedSettings.hasOwnProperty('activeWordPacks')) {
+    if (parsedSettings != null && !parsedSettings.hasOwnProperty('activeWordPacks')) {
         return null;
     }
     return parsedSettings;
