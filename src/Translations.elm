@@ -212,3 +212,13 @@ getStatisticsTableHeaderRatio language =
 
         EN ->
             ( "Ratio", "C/I" )
+
+
+getSettingsTitle : Language -> String
+getSettingsTitle language =
+    case language of
+        DE ->
+            "Einstellungen"
+
+        EN ->
+            "Settings"

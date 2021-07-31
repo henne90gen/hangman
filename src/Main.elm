@@ -3,7 +3,7 @@ port module Main exposing (main)
 import Browser
 import Color
 import File
-import Html exposing (Html, a, button, div, input, label, option, select, span, table, tbody, td, text, th, thead, tr)
+import Html exposing (Html, a, button, div, h1, input, label, option, select, span, table, tbody, td, text, th, thead, tr)
 import Html.Attributes exposing (checked, class, disabled, href, style, target, type_, value)
 import Html.Events exposing (onClick)
 import Html.Events.Extra exposing (onChange)
@@ -12,10 +12,10 @@ import Json.Decode as Decode
 import Round
 import Task
 import Translations
-import TypedSvg exposing (circle, g, line, path, svg)
-import TypedSvg.Attributes exposing (cx, cy, height, r, stroke, strokeWidth, transform, viewBox, visibility, width, x1, x2, y1, y2)
+import TypedSvg exposing (circle, g, line, path, rect, svg)
+import TypedSvg.Attributes exposing (cx, cy, fill, height, r, stroke, strokeWidth, transform, viewBox, visibility, width, x1, x2, y1, y2)
 import TypedSvg.Core
-import TypedSvg.Types exposing (Paint(..), Transform(..), px)
+import TypedSvg.Types exposing (Paint(..), StrokeLinejoin(..), Transform(..), percent, px)
 import Url
 
 
@@ -728,10 +728,7 @@ view model =
     { title = Translations.getTitle language
     , body =
         [ div [ class "h-full", getBackgroundColor theme ]
-            [ div [ class "py-2", style "margin-left" "-6rem" ]
-                [ viewNewGameButton language theme
-                , viewSettingsButton model.isSettingsPanelOpen
-                ]
+            [ viewSettingsButton theme model.isSettingsPanelOpen
             , viewActivePage model
             ]
         ]
@@ -758,24 +755,59 @@ viewActivePage model =
     in
     if model.isSettingsPanelOpen then
         div []
-            [ viewLanguageSelect language theme
+            [ viewSettingsTitle theme language
             , viewDarkModeSwitch theme
+            , viewLanguageSelect language theme
             , viewCustomWordsFileUpload model.settings.activeWordPacks wordPacks fileInputIdx
             ]
 
     else
         div []
             [ viewWord gameData.shownWord gameData.gameState language theme
-            , viewAlphabet gameData.alphabet theme
+            , viewAlphabet gameData.gameState gameData.alphabet theme
             , viewGameOverText gameData.gameState language theme
+            , viewNewGameButton gameData.gameState language theme
             , viewHangmanAndStatistics gameData.errorCounter model.statistics language theme
             ]
 
 
-viewSettingsButton : Bool -> Html Msg
-viewSettingsButton isSettingsPanelOpen =
+viewSettingsTitle : ColorTheme -> Translations.Language -> Html msg
+viewSettingsTitle theme language =
+    let
+        textColor =
+            case theme of
+                LightTheme ->
+                    class "text-black"
+
+                DarkTheme ->
+                    class "text-white"
+    in
+    h1
+        [ textColor
+        , class "text-2xl"
+        ]
+        [ text (Translations.getSettingsTitle language) ]
+
+
+viewSettingsButton : ColorTheme -> Bool -> Html Msg
+viewSettingsButton theme isSettingsPanelOpen =
+    let
+        buttonClasses =
+            "absolute top-8 right-10"
+
+        accentColor =
+            case theme of
+                DarkTheme ->
+                    Paint Color.white
+
+                LightTheme ->
+                    Paint Color.black
+    in
     if isSettingsPanelOpen then
-        button [ onClick ToggleSettingsPanel, class "text-white" ]
+        button
+            [ onClick ToggleSettingsPanel
+            , class buttonClasses
+            ]
             [ svg
                 [ TypedSvg.Attributes.width (px 32)
                 , TypedSvg.Attributes.height (px 32)
@@ -786,12 +818,12 @@ viewSettingsButton isSettingsPanelOpen =
                     , TypedSvg.Attributes.cy (px 25)
                     , TypedSvg.Attributes.r (px 24)
                     , TypedSvg.Attributes.fill PaintNone
-                    , TypedSvg.Attributes.stroke (Paint Color.white)
+                    , TypedSvg.Attributes.stroke accentColor
                     , TypedSvg.Attributes.strokeWidth (px 1.5)
                     ]
                     []
                 , TypedSvg.text_
-                    [ TypedSvg.Attributes.fill (Paint Color.white)
+                    [ TypedSvg.Attributes.fill accentColor
                     , TypedSvg.Attributes.stroke PaintNone
                     , TypedSvg.Attributes.textAnchor TypedSvg.Types.AnchorMiddle
                     , TypedSvg.Attributes.dominantBaseline TypedSvg.Types.DominantBaselineMiddle
@@ -803,14 +835,17 @@ viewSettingsButton isSettingsPanelOpen =
             ]
 
     else
-        button [ onClick ToggleSettingsPanel, class "text-white" ]
+        button
+            [ onClick ToggleSettingsPanel
+            , class buttonClasses
+            ]
             [ svg
                 [ TypedSvg.Attributes.width (px 32)
                 , TypedSvg.Attributes.height (px 32)
                 , TypedSvg.Attributes.viewBox 0 0 24 24
                 ]
                 [ path
-                    [ TypedSvg.Attributes.fill (Paint Color.white)
+                    [ TypedSvg.Attributes.fill accentColor
                     , TypedSvg.Attributes.stroke PaintNone
                     , TypedSvg.Attributes.d "M12 8.666c-1.838 0-3.333 1.496-3.333 3.334s1.495 3.333 3.333 3.333 3.333-1.495 3.333-3.333-1.495-3.334-3.333-3.334m0 7.667c-2.39 0-4.333-1.943-4.333-4.333s1.943-4.334 4.333-4.334 4.333 1.944 4.333 4.334c0 2.39-1.943 4.333-4.333 4.333m-1.193 6.667h2.386c.379-1.104.668-2.451 2.107-3.05 1.496-.617 2.666.196 3.635.672l1.686-1.688c-.508-1.047-1.266-2.199-.669-3.641.567-1.369 1.739-1.663 3.048-2.099v-2.388c-1.235-.421-2.471-.708-3.047-2.098-.572-1.38.057-2.395.669-3.643l-1.687-1.686c-1.117.547-2.221 1.257-3.642.668-1.374-.571-1.656-1.734-2.1-3.047h-2.386c-.424 1.231-.704 2.468-2.099 3.046-.365.153-.718.226-1.077.226-.843 0-1.539-.392-2.566-.893l-1.687 1.686c.574 1.175 1.251 2.237.669 3.643-.571 1.375-1.734 1.654-3.047 2.098v2.388c1.226.418 2.468.705 3.047 2.098.581 1.403-.075 2.432-.669 3.643l1.687 1.687c1.45-.725 2.355-1.204 3.642-.669 1.378.572 1.655 1.738 2.1 3.047m3.094 1h-3.803c-.681-1.918-.785-2.713-1.773-3.123-1.005-.419-1.731.132-3.466.952l-2.689-2.689c.873-1.837 1.367-2.465.953-3.465-.412-.991-1.192-1.087-3.123-1.773v-3.804c1.906-.678 2.712-.782 3.123-1.773.411-.991-.071-1.613-.953-3.466l2.689-2.688c1.741.828 2.466 1.365 3.465.953.992-.412 1.082-1.185 1.775-3.124h3.802c.682 1.918.788 2.714 1.774 3.123 1.001.416 1.709-.119 3.467-.952l2.687 2.688c-.878 1.847-1.361 2.477-.952 3.465.411.992 1.192 1.087 3.123 1.774v3.805c-1.906.677-2.713.782-3.124 1.773-.403.975.044 1.561.954 3.464l-2.688 2.689c-1.728-.82-2.467-1.37-3.456-.955-.988.41-1.08 1.146-1.785 3.126"
                     ]
@@ -819,30 +854,28 @@ viewSettingsButton isSettingsPanelOpen =
             ]
 
 
-viewNewGameButton : Translations.Language -> ColorTheme -> Html Msg
-viewNewGameButton language theme =
-    button
-        ([ onClick NewGameButtonPressed
-         , class "px-4"
-         , class "py-2"
-         , class "rounded"
-         , class "mx-5"
-         ]
-            ++ getNewGameButtonColors theme
-        )
-        [ text (Translations.getNewGameText language) ]
+viewNewGameButton : GameState -> Translations.Language -> ColorTheme -> Html Msg
+viewNewGameButton gameState language theme =
+    case gameState of
+        Playing ->
+            div [] []
+
+        _ ->
+            div [ class "pb-2" ]
+                [ button
+                    ([ onClick NewGameButtonPressed
+                     , class "px-4 py-2 rounded"
+                     ]
+                        ++ getNewGameButtonColors theme
+                    )
+                    [ text (Translations.getNewGameText language) ]
+                ]
 
 
 viewLanguageSelect : Translations.Language -> ColorTheme -> Html Msg
 viewLanguageSelect language theme =
     select
-        ([ class "appearance-none"
-         , class "border"
-         , class "py-3"
-         , class "px-4"
-         , class "rounded"
-         , class "leading-tight"
-         , class "focus:outline-none"
+        ([ class "appearance-none border py-3 px-4 rounded leading-tight focus:outline-none"
          , onChange ChangeLanguage
          , value <| Translations.languageToString language
          ]
@@ -865,20 +898,82 @@ viewDarkModeSwitch theme =
                     False
     in
     div
-        [ class "ml-5"
-        , class "content-center"
-        , class "inline-block"
-
-        -- TODO this is slightly too high
-        , class "mt-1"
-
-        -- TODO this is a hack to make it look good
-        , class "absolute"
-        ]
-        [ label
+        [ class "w-full flex items-center justify-center py-3" ]
+        [ sunIcon theme
+        , label
             [ class "switch" ]
             [ input [ type_ "checkbox", checked isChecked, onClick ToggleDarkMode ] []
             , span [ class "slider" ] []
+            ]
+        , moonIcon theme
+        ]
+
+
+sunIcon : ColorTheme -> Html msg
+sunIcon theme =
+    let
+        accentColor =
+            case theme of
+                LightTheme ->
+                    Paint Color.black
+
+                DarkTheme ->
+                    Paint Color.white
+    in
+    div [ class "px-2" ]
+        [ svg
+            [ TypedSvg.Attributes.width (px 32)
+            , TypedSvg.Attributes.height (px 32)
+            , TypedSvg.Attributes.viewBox 0 0 24 24
+            , TypedSvg.Attributes.fill PaintNone
+            , TypedSvg.Attributes.strokeWidth (px 2)
+            , TypedSvg.Attributes.stroke accentColor
+            , TypedSvg.Attributes.strokeLinecap TypedSvg.Types.StrokeLinecapRound
+            , TypedSvg.Attributes.strokeLinejoin StrokeLinejoinRound
+            ]
+            [ circle [ cx (px 12), cy (px 12), r (px 5) ] []
+            , line [ x1 (px 12), y1 (px 1), x2 (px 12), y2 (px 3) ] []
+            , line [ x1 (px 12), y1 (px 21), x2 (px 12), y2 (px 23) ] []
+            , line [ x1 (px 4.22), y1 (px 4.22), x2 (px 5.64), y2 (px 5.64) ] []
+            , line [ x1 (px 18.36), y1 (px 18.36), x2 (px 19.78), y2 (px 19.78) ] []
+            , line [ x1 (px 1), y1 (px 12), x2 (px 3), y2 (px 12) ] []
+            , line [ x1 (px 21), y1 (px 12), x2 (px 23), y2 (px 12) ] []
+            , line [ x1 (px 4.22), y1 (px 19.78), x2 (px 5.64), y2 (px 18.36) ] []
+            , line [ x1 (px 18.36), y1 (px 5.64), x2 (px 19.78), y2 (px 4.22) ] []
+            ]
+        ]
+
+
+moonIcon : ColorTheme -> Html Msg
+moonIcon theme =
+    let
+        accentColor =
+            case theme of
+                LightTheme ->
+                    Paint Color.black
+
+                DarkTheme ->
+                    Paint Color.white
+    in
+    div [ class "px-2" ]
+        [ svg
+            [ TypedSvg.Attributes.width (px 32)
+            , TypedSvg.Attributes.height (px 32)
+            , TypedSvg.Attributes.viewBox 0 0 24 24
+            , fill accentColor
+            ]
+            [ TypedSvg.mask [ TypedSvg.Attributes.id "moon-mask" ]
+                [ rect
+                    [ TypedSvg.Attributes.x (px 0)
+                    , TypedSvg.Attributes.y (px 0)
+                    , width (percent 100)
+                    , height (percent 100)
+                    , fill (Paint Color.white)
+                    ]
+                    []
+                , circle [ cx (px 19), cy (px 8), r (px 9), fill (Paint Color.black) ] []
+                ]
+            , circle [ cx (px 13), cy (px 12), r (px 7), TypedSvg.Attributes.mask "url(#moon-mask)" ] []
             ]
         ]
 
@@ -949,22 +1044,16 @@ viewWord letters gameState language theme =
             else
                 List.map (viewLetter gameState) letters
     in
-    div
-        ([ class "text-4xl"
-         , class "m-5"
-         , class "mt-3"
-         , class "py-2"
-         , class "rounded"
-         , class "flex"
-         , class "flex-col"
-         , class "items-center"
-         ]
-            ++ classes
-        )
-        [ div [ class "flex-1" ] renderedLetters
-        , div [ class "flex-1" ]
-            [ viewGoogleLink letters gameState language theme
-            , viewWikipediaLink letters gameState language theme
+    div [ class "p-5 pb-3" ]
+        [ div
+            (class "text-4xl pb-4 pt-2 rounded flex flex-col items-center"
+                :: classes
+            )
+            [ div [ class "flex-1" ] renderedLetters
+            , div [ class "flex-1" ]
+                [ viewGoogleLink letters gameState language theme
+                , viewWikipediaLink letters gameState language theme
+                ]
             ]
         ]
 
@@ -1071,20 +1160,25 @@ getWikipediaLanguagePrefix language =
             "en"
 
 
-viewAlphabet : List AlphabetLetter -> ColorTheme -> Html Msg
-viewAlphabet alphabet theme =
-    div
-        [ class "flex"
-        , class "items-center"
-        , class "px-5"
-        , class "py-2"
-        , getBackgroundColor theme
-        ]
-        [ div
-            [ class "flex-1"
-            ]
-            (List.map (viewAlphabetLetter theme) alphabet)
-        ]
+viewAlphabet : GameState -> List AlphabetLetter -> ColorTheme -> Html Msg
+viewAlphabet gameState alphabet theme =
+    case gameState of
+        Playing ->
+            div
+                [ class "flex"
+                , class "items-center"
+                , class "px-5"
+                , class "py-2"
+                , getBackgroundColor theme
+                ]
+                [ div
+                    [ class "flex-1"
+                    ]
+                    (List.map (viewAlphabetLetter theme) alphabet)
+                ]
+
+        _ ->
+            div [] []
 
 
 viewAlphabetLetter : ColorTheme -> AlphabetLetter -> Html Msg
@@ -1113,10 +1207,10 @@ viewGameOverText gameState language theme =
             div [] []
 
         HasWon ->
-            div [ class "py-2", getTextColor theme ] [ text (Translations.getWonText language) ]
+            div [ class "pb-2", getTextColor theme ] [ text (Translations.getWonText language) ]
 
         HasLost ->
-            div [ class "py-2", getTextColor theme ] [ text (Translations.getLostText language) ]
+            div [ class "pb-2", getTextColor theme ] [ text (Translations.getLostText language) ]
 
 
 viewHangmanAndStatistics : Int -> Statistics -> Translations.Language -> ColorTheme -> Html msg
@@ -1501,30 +1595,24 @@ getCharacter letter =
 
 getWordBackgroundColor : GameState -> ColorTheme -> List (Html.Attribute msg)
 getWordBackgroundColor gameState theme =
+    let
+        textColor =
+            case theme of
+                DarkTheme ->
+                    class "text-white"
+
+                LightTheme ->
+                    class "text-black"
+    in
     case gameState of
         Playing ->
-            case theme of
-                DarkTheme ->
-                    [ class "text-white" ]
-
-                LightTheme ->
-                    [ class "text-black" ]
+            [ textColor ]
 
         HasWon ->
-            case theme of
-                DarkTheme ->
-                    [ class "text-white", class "bg-green-700" ]
-
-                LightTheme ->
-                    [ class "text-black", class "bg-green-400" ]
+            [ textColor, class "bg-green-700" ]
 
         HasLost ->
-            case theme of
-                DarkTheme ->
-                    [ class "text-white", class "bg-red-700" ]
-
-                LightTheme ->
-                    [ class "text-black", class "bg-red-400" ]
+            [ textColor, class "bg-red-700" ]
 
 
 isGameOver : GameState -> Bool
