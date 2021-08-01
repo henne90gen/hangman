@@ -232,9 +232,16 @@ emptyGameData =
 
 defaultSettings : Flags -> Settings
 defaultSettings flags =
-    { language = Translations.defaultLanguage
+    let
+        language =
+            Translations.defaultLanguage
+    in
+    { language = language
     , theme = LightTheme
-    , activeWordPacks = List.map .id flags.wordPackInfos
+    , activeWordPacks =
+        flags.wordPackInfos
+            |> List.filter (\wp -> wp.isDefault && wp.name == Translations.languageToString language)
+            |> List.map .id
     }
 
 
@@ -394,13 +401,13 @@ updateLanguage wordPacks settings language =
         currentLanguageWordPackId =
             wordPacks
                 |> List.filter (\wp -> wp.isDefault && wp.name == Translations.languageToString settings.language)
-                |> List.map (\wp -> wp.id)
+                |> List.map .id
                 |> List.head
 
         newLanguageWordPackId =
             wordPacks
                 |> List.filter (\wp -> wp.isDefault && wp.name == Translations.languageToString language)
-                |> List.map (\wp -> wp.id)
+                |> List.map .id
                 |> List.head
 
         filteredActiveWordPacks =
