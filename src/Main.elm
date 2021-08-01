@@ -4,7 +4,7 @@ import Browser
 import Color
 import File
 import Html exposing (Html, a, button, div, h1, input, label, option, select, span, table, tbody, td, text, th, thead, tr)
-import Html.Attributes exposing (checked, class, disabled, href, style, target, type_, value)
+import Html.Attributes exposing (checked, class, disabled, href, selected, target, type_, value)
 import Html.Events exposing (onClick)
 import Html.Events.Extra exposing (onChange)
 import Html.Keyed
@@ -744,22 +744,11 @@ viewActivePage model =
         theme =
             model.settings.theme
 
-        wordPacks =
-            model.wordPacks
-
-        fileInputIdx =
-            model.fileInputIdx
-
         gameData =
             model.gameData
     in
     if model.isSettingsPanelOpen then
-        div []
-            [ viewSettingsTitle theme language
-            , viewDarkModeSwitch theme
-            , viewLanguageSelect language theme
-            , viewCustomWordsFileUpload model.settings.activeWordPacks wordPacks fileInputIdx
-            ]
+        viewSettingsPanel model
 
     else
         div []
@@ -767,24 +756,44 @@ viewActivePage model =
             , viewAlphabet gameData.gameState gameData.alphabet theme
             , viewGameOverText gameData.gameState language theme
             , viewNewGameButton gameData.gameState language theme
-            , viewHangmanAndStatistics gameData.errorCounter model.statistics language theme
+            , viewHangmanAndStatistics gameData.errorCounter theme
             ]
+
+
+viewSettingsPanel : Model -> Html Msg
+viewSettingsPanel model =
+    let
+        language =
+            model.settings.language
+
+        theme =
+            model.settings.theme
+
+        wordPacks =
+            model.wordPacks
+
+        fileInputIdx =
+            model.fileInputIdx
+
+        statistics =
+            model.statistics
+    in
+    div [ class "flex justify-center" ]
+        [ div [ class "grid gap-8 grid-cols-1 auto-rows-auto w-2/3" ]
+            [ viewSettingsTitle theme language
+            , viewColorThemeSelector theme language
+            , viewLanguageSelector language theme
+            , viewStatistics statistics language theme
+            , viewCustomWordsFileUpload theme model.settings.activeWordPacks wordPacks fileInputIdx
+            ]
+        ]
 
 
 viewSettingsTitle : ColorTheme -> Translations.Language -> Html msg
 viewSettingsTitle theme language =
-    let
-        textColor =
-            case theme of
-                LightTheme ->
-                    class "text-black"
-
-                DarkTheme ->
-                    class "text-white"
-    in
     h1
-        [ textColor
-        , class "text-2xl"
+        [ getTextColor theme
+        , class "text-2xl pt-8 pb-5"
         ]
         [ text (Translations.getSettingsTitle language) ]
 
@@ -872,22 +881,8 @@ viewNewGameButton gameState language theme =
                 ]
 
 
-viewLanguageSelect : Translations.Language -> ColorTheme -> Html Msg
-viewLanguageSelect language theme =
-    select
-        ([ class "appearance-none border py-3 px-4 rounded leading-tight focus:outline-none"
-         , onChange ChangeLanguage
-         , value <| Translations.languageToString language
-         ]
-            ++ getLanguageSelectColor theme
-        )
-        [ option [ value "DE" ] [ text "DE" ]
-        , option [ value "EN" ] [ text "EN" ]
-        ]
-
-
-viewDarkModeSwitch : ColorTheme -> Html Msg
-viewDarkModeSwitch theme =
+viewColorThemeSelector : ColorTheme -> Translations.Language -> Html Msg
+viewColorThemeSelector theme language =
     let
         isChecked =
             case theme of
@@ -898,14 +893,20 @@ viewDarkModeSwitch theme =
                     False
     in
     div
-        [ class "w-full flex items-center justify-center py-3" ]
-        [ sunIcon theme
-        , label
-            [ class "switch" ]
-            [ input [ type_ "checkbox", checked isChecked, onClick ToggleDarkMode ] []
-            , span [ class "slider" ] []
+        [ class "flex items-center justify-center px-5 py-3 shadow rounded-xl"
+        , getHighlightedBackgroundColor theme
+        ]
+        [ div [ class "flex-1 text-xl", getTextColor theme ] [ text (Translations.getSettingsColorTheme language) ]
+        , div
+            [ class "flex-1 w-full flex items-center justify-center py-3" ]
+            [ sunIcon theme
+            , label
+                [ class "switch" ]
+                [ input [ type_ "checkbox", checked isChecked, onClick ToggleDarkMode ] []
+                , span [ class "slider" ] []
+                ]
+            , moonIcon theme
             ]
-        , moonIcon theme
         ]
 
 
@@ -978,22 +979,55 @@ moonIcon theme =
         ]
 
 
-viewCustomWordsFileUpload : List Int -> List WordPackInfo -> Int -> Html Msg
-viewCustomWordsFileUpload activeWordPacks wordPacks fileInputIdx =
+viewLanguageSelector : Translations.Language -> ColorTheme -> Html Msg
+viewLanguageSelector language theme =
+    div
+        [ class "flex items-center justify-center px-5 py-3 shadow rounded-xl"
+        , getHighlightedBackgroundColor theme
+        ]
+        [ div [ class "flex-1 text-xl", getTextColor theme ] [ text (Translations.getSettingsLanguage language) ]
+        , div [ class "flex-1" ]
+            [ select
+                ([ class "appearance-none border py-3 px-4 rounded leading-tight focus:outline-none"
+                 , onChange ChangeLanguage
+                 , value <| Translations.languageToString language
+                 ]
+                    ++ getLanguageSelectColor theme
+                )
+                [ option [ selected (language == Translations.DE), value "DE" ] [ text "DE" ]
+                , option [ selected (language == Translations.EN), value "EN" ] [ text "EN" ]
+                ]
+            ]
+        ]
+
+
+viewCustomWordsFileUpload : ColorTheme -> List Int -> List WordPackInfo -> Int -> Html Msg
+viewCustomWordsFileUpload theme activeWordPacks wordPacks fileInputIdx =
+    let
+        invisibleTextColor =
+            case theme of
+                LightTheme ->
+                    class "text-gray-100"
+
+                DarkTheme ->
+                    class "text-gray-700"
+    in
     Html.Keyed.node "div"
-        []
+        [ class "rounded-xl shadow p-5"
+        , getHighlightedBackgroundColor theme
+        ]
         [ ( "file-input" ++ String.fromInt fileInputIdx
           , input
                 [ type_ "file"
                 , Html.Attributes.multiple True
                 , Html.Events.on "change" (Decode.map GotCustomWordFiles filesDecoder)
-                , class "text-white" -- TODO adjust this according to the theme, so that the text is invisible
+                , invisibleTextColor
                 ]
                 []
           )
         , ( "custom-words-files"
           , div [ class "bg-green-700" ]
-                (List.map (viewWordPackInfo activeWordPacks) wordPacks)
+                (List.map (viewWordPackInfo theme activeWordPacks) wordPacks)
           )
         ]
 
@@ -1017,14 +1051,15 @@ isWordPackActive activeWordPacks wordPack =
             True
 
 
-viewWordPackInfo : List Int -> WordPackInfo -> Html Msg
-viewWordPackInfo activeWordPacks f =
-    div [ class "text-white" ]
+viewWordPackInfo : ColorTheme -> List Int -> WordPackInfo -> Html Msg
+viewWordPackInfo theme activeWordPacks f =
+    div [ getTextColor theme ]
         [ input [ type_ "checkbox", checked (isWordPackActive activeWordPacks f), onClick (ToggleCustomWordPackActive f.id) ] []
         , text f.name
         , button
             [ onClick (RemoveCustomWordPack f.id)
-            , class "text-white px-2 py-1 bg-red-600"
+            , class "px-2 py-1 bg-red-600"
+            , getTextColor theme
             , disabled f.isDefault
             ]
             [ text "X" ]
@@ -1213,26 +1248,17 @@ viewGameOverText gameState language theme =
             div [ class "pb-2", getTextColor theme ] [ text (Translations.getLostText language) ]
 
 
-viewHangmanAndStatistics : Int -> Statistics -> Translations.Language -> ColorTheme -> Html msg
-viewHangmanAndStatistics counter statistics language theme =
+viewHangmanAndStatistics : Int -> ColorTheme -> Html msg
+viewHangmanAndStatistics counter theme =
     div
-        [ class "px-5"
-        , class "pt-2"
-        , class "pb-5"
+        [ class "px-5 pt-2 pb-5"
         , getBackgroundColor theme
         ]
         [ div
-            [ class "grid"
-            , class "grid-cols-1"
-            , class "lg:grid-cols-2"
-            , class "xl:grid-cols-2"
-            , class "bg-gray-200"
-            , class "py-5"
-            , class "rounded"
+            [ class "grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-2 py-5 rounded-xl shadow"
             , getHighlightedBackgroundColor theme
             ]
             [ viewHangman counter theme
-            , viewStatistics statistics language theme
             ]
         ]
 
@@ -1240,10 +1266,7 @@ viewHangmanAndStatistics counter statistics language theme =
 viewHangman : Int -> ColorTheme -> Html msg
 viewHangman counter theme =
     div
-        [ class "flex"
-        , class "justify-center"
-        , class "lg:justify-end"
-        , class "xl:justify-end"
+        [ class "flex justify-center lg:justify-end xl:justify-end"
         ]
         [ viewHangmanSvg counter theme ]
 
@@ -1406,10 +1429,8 @@ viewHangmanPerson counter =
 viewStatistics : Statistics -> Translations.Language -> ColorTheme -> Html msg
 viewStatistics statistics language theme =
     div
-        [ class "mt-6"
-        , class "flex"
-        , class "flex-col"
-        , class "items-center"
+        [ class "flex flex-col items-center p-4 rounded-xl shadow"
+        , getHighlightedBackgroundColor theme
         , getStatisticsTextColor theme
         ]
         [ viewStatisticsPane statistics language ]
@@ -1418,8 +1439,7 @@ viewStatistics statistics language theme =
 viewStatisticsPane : Statistics -> Translations.Language -> Html msg
 viewStatisticsPane statistics language =
     table
-        [ class "my-2"
-        , class "table-auto"
+        [ class "table-auto"
         , class "border-collapse"
         ]
         [ viewStatisticsTableHeader language
@@ -1536,18 +1556,17 @@ getLanguageSelectColor theme =
     case theme of
         DarkTheme ->
             [ class "bg-blue-800"
-            , class "text-gray-300"
+            , getTextColor theme
             , class "border-blue-800"
-            , class "focus:bg-blue-500"
-            , class "focus:border-blue-600"
+            , class "focus:bg-blue-600"
+            , class "focus:border-blue-700"
             ]
 
         LightTheme ->
-            [ class "bg-gray-200"
-            , class "text-gray-700"
-            , class "border-gray-200"
-            , class "focus:bg-white"
-            , class "focus:border-gray-500"
+            [ class "bg-gray-300"
+            , getTextColor theme
+            , class "border-gray-300"
+            , class "focus:border-gray-400"
             ]
 
 
@@ -1597,12 +1616,7 @@ getWordBackgroundColor : GameState -> ColorTheme -> List (Html.Attribute msg)
 getWordBackgroundColor gameState theme =
     let
         textColor =
-            case theme of
-                DarkTheme ->
-                    class "text-white"
-
-                LightTheme ->
-                    class "text-black"
+            getTextColor theme
     in
     case gameState of
         Playing ->
@@ -1686,7 +1700,7 @@ getBackgroundColor theme =
             class "bg-gray-800"
 
         LightTheme ->
-            class ""
+            class "bg-white"
 
 
 getHighlightedBackgroundColor : ColorTheme -> Html.Attribute msg
@@ -1696,7 +1710,7 @@ getHighlightedBackgroundColor theme =
             class "bg-gray-700"
 
         LightTheme ->
-            class ""
+            class "bg-gray-100"
 
 
 getTextColor : ColorTheme -> Html.Attribute msg

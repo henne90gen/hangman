@@ -222,3 +222,23 @@ getSettingsTitle language =
 
         EN ->
             "Settings"
+
+
+getSettingsColorTheme : Language -> String
+getSettingsColorTheme language =
+    case language of
+        DE ->
+            "Farbschema"
+
+        EN ->
+            "Color Theme"
+
+
+getSettingsLanguage : Language -> String
+getSettingsLanguage language =
+    case language of
+        DE ->
+            "Sprache"
+
+        EN ->
+            "Language"
