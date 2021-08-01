@@ -316,13 +316,9 @@ update msg model =
                     Translations.languageFromString newLanguageStr
 
                 newSettings =
-                    updateLanguage model.settings newLanguage
+                    updateLanguage model.wordPacks model.settings newLanguage
             in
-            ( { model
-                | settings = newSettings
-
-                -- , gameData = clearAlphabet model.gameData
-              }
+            ( { model | settings = newSettings }
             , newSettings |> convertSettings |> saveSettings
             )
 
@@ -392,9 +388,38 @@ startNewGame model newWord =
     }
 
 
-updateLanguage : Settings -> Translations.Language -> Settings
-updateLanguage settings language =
-    { settings | language = language }
+updateLanguage : List WordPackInfo -> Settings -> Translations.Language -> Settings
+updateLanguage wordPacks settings language =
+    let
+        currentLanguageWordPackId =
+            wordPacks
+                |> List.filter (\wp -> wp.isDefault && wp.name == Translations.languageToString settings.language)
+                |> List.map (\wp -> wp.id)
+                |> List.head
+
+        newLanguageWordPackId =
+            wordPacks
+                |> List.filter (\wp -> wp.isDefault && wp.name == Translations.languageToString language)
+                |> List.map (\wp -> wp.id)
+                |> List.head
+
+        filteredActiveWordPacks =
+            case currentLanguageWordPackId of
+                Nothing ->
+                    settings.activeWordPacks
+
+                Just wpId ->
+                    List.filter (\i -> i /= wpId) settings.activeWordPacks
+
+        newActiveWordPacks =
+            case newLanguageWordPackId of
+                Nothing ->
+                    filteredActiveWordPacks
+
+                Just wpId ->
+                    wpId :: filteredActiveWordPacks
+    in
+    { settings | language = language, activeWordPacks = newActiveWordPacks }
 
 
 toggleActiveWordPack : Settings -> Int -> Settings
