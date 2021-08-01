@@ -320,7 +320,8 @@ update msg model =
             in
             ( { model
                 | settings = newSettings
-                , gameData = clearAlphabet model.gameData
+
+                -- , gameData = clearAlphabet model.gameData
               }
             , newSettings |> convertSettings |> saveSettings
             )
@@ -737,6 +738,15 @@ view model =
 
 viewActivePage : Model -> Html Msg
 viewActivePage model =
+    if model.isSettingsPanelOpen then
+        viewSettingsPage model
+
+    else
+        viewGamePage model
+
+
+viewGamePage : Model -> Html Msg
+viewGamePage model =
     let
         language =
             model.settings.language
@@ -747,21 +757,18 @@ viewActivePage model =
         gameData =
             model.gameData
     in
-    if model.isSettingsPanelOpen then
-        viewSettingsPanel model
-
-    else
-        div []
-            [ viewWord gameData.shownWord gameData.gameState language theme
-            , viewAlphabet gameData.gameState gameData.alphabet theme
-            , viewGameOverText gameData.gameState language theme
-            , viewNewGameButton gameData.gameState language theme
-            , viewHangmanAndStatistics gameData.errorCounter theme
-            ]
+    div [ getBackgroundColor theme ]
+        [ viewTitle language theme
+        , viewWord gameData.shownWord gameData.gameState language theme
+        , viewAlphabet gameData.gameState gameData.alphabet theme
+        , viewGameOverText gameData.gameState language theme
+        , viewNewGameButton gameData.gameState language theme
+        , viewHangman gameData.errorCounter theme
+        ]
 
 
-viewSettingsPanel : Model -> Html Msg
-viewSettingsPanel model =
+viewSettingsPage : Model -> Html Msg
+viewSettingsPage model =
     let
         language =
             model.settings.language
@@ -778,8 +785,8 @@ viewSettingsPanel model =
         statistics =
             model.statistics
     in
-    div [ class "flex justify-center" ]
-        [ div [ class "grid gap-8 grid-cols-1 auto-rows-auto w-2/3" ]
+    div [ class "flex justify-center", getBackgroundColor theme ]
+        [ div [ class "grid gap-8 grid-cols-1 auto-rows-auto w-3/4 md:w-2/3 pb-6" ]
             [ viewSettingsTitle theme language
             , viewColorThemeSelector theme language
             , viewLanguageSelector language theme
@@ -870,7 +877,7 @@ viewNewGameButton gameState language theme =
             div [] []
 
         _ ->
-            div [ class "pb-2" ]
+            div [ class "pt-2" ]
                 [ button
                     ([ onClick NewGameButtonPressed
                      , class "px-4 py-2 rounded"
@@ -1066,6 +1073,15 @@ viewWordPackInfo theme activeWordPacks f =
         ]
 
 
+viewTitle : Translations.Language -> ColorTheme -> Html msg
+viewTitle language theme =
+    h1
+        [ getTextColor theme
+        , class "text-2xl pt-8 pb-5"
+        ]
+        [ text (Translations.getTitle language) ]
+
+
 viewWord : List Letter -> GameState -> Translations.Language -> ColorTheme -> Html msg
 viewWord letters gameState language theme =
     let
@@ -1248,27 +1264,15 @@ viewGameOverText gameState language theme =
             div [ class "pb-2", getTextColor theme ] [ text (Translations.getLostText language) ]
 
 
-viewHangmanAndStatistics : Int -> ColorTheme -> Html msg
-viewHangmanAndStatistics counter theme =
-    div
-        [ class "px-5 pt-2 pb-5"
-        , getBackgroundColor theme
-        ]
-        [ div
-            [ class "grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-2 py-5 rounded-xl shadow"
-            , getHighlightedBackgroundColor theme
-            ]
-            [ viewHangman counter theme
-            ]
-        ]
-
-
 viewHangman : Int -> ColorTheme -> Html msg
 viewHangman counter theme =
-    div
-        [ class "flex justify-center lg:justify-end xl:justify-end"
+    div [ class "px-10 py-6" ]
+        [ div
+            [ class "flex justify-center py-8 rounded-xl shadow"
+            , getHighlightedBackgroundColor theme
+            ]
+            [ viewHangmanSvg counter theme ]
         ]
-        [ viewHangmanSvg counter theme ]
 
 
 viewHangmanSvg : Int -> ColorTheme -> Html msg
