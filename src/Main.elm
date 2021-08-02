@@ -694,11 +694,6 @@ updateLetterStatistics statistics hasFoundLetter =
         }
 
 
-clearAlphabet : GameData -> GameData
-clearAlphabet gameData =
-    { gameData | alphabet = List.map Disabled (String.toList alphabetString) }
-
-
 updateTheme : Settings -> Settings
 updateTheme settings =
     case settings.theme of
@@ -818,12 +813,12 @@ viewSettingsPage model =
             model.statistics
     in
     div [ class "flex justify-center", getBackgroundColor theme ]
-        [ div [ class "grid gap-8 grid-cols-1 auto-rows-auto w-3/4 md:w-2/3 pb-6" ]
+        [ div [ class "grid gap-6 grid-cols-1 auto-rows-auto pb-3 px-3 md:px-0" ]
             [ viewSettingsTitle theme language
             , viewColorThemeSelector theme language
             , viewLanguageSelector language theme
             , viewStatistics statistics language theme
-            , viewCustomWordsFileUpload theme model.settings.activeWordPacks wordPacks fileInputIdx
+            , viewWordPacks theme language model.settings.activeWordPacks wordPacks fileInputIdx
             ]
         ]
 
@@ -1040,40 +1035,50 @@ viewLanguageSelector language theme =
         ]
 
 
-viewCustomWordsFileUpload : ColorTheme -> List Int -> List WordPackInfo -> Int -> Html Msg
-viewCustomWordsFileUpload theme activeWordPacks wordPacks fileInputIdx =
-    let
-        invisibleTextColor =
-            case theme of
-                LightTheme ->
-                    class "text-gray-100"
-
-                DarkTheme ->
-                    class "text-gray-700"
-    in
-    Html.Keyed.node "div"
+viewWordPacks : ColorTheme -> Translations.Language -> List Int -> List WordPackInfo -> Int -> Html Msg
+viewWordPacks theme language activeWordPacks wordPacks fileInputIdx =
+    div
         [ class "rounded-xl shadow p-5"
         , getHighlightedBackgroundColor theme
+        , getTextColor theme
         ]
-        [ ( "file-input" ++ String.fromInt fileInputIdx
-          , input
-                [ type_ "file"
-                , Html.Attributes.multiple True
-                , Html.Events.on "change" (Decode.map GotCustomWordFiles filesDecoder)
-                , invisibleTextColor
-                ]
-                []
-          )
-        , ( "custom-words-files"
-          , div [ class "bg-green-700" ]
-                (List.map (viewWordPackInfo theme activeWordPacks) wordPacks)
-          )
+        [ div [ getTextColor theme, class "text-xl" ] [ text (Translations.getSettingsWordPacks language) ]
+        , div [ class "pt-3 grid gap-2 grid-cols-3" ]
+            ([ div [] [ text (Translations.getSettingsWPActive language) ]
+             , div [] [ text (Translations.getSettingsWPName language) ]
+             , div [] [  ]
+             ]
+                ++ List.concatMap (viewWordPackInfo activeWordPacks) wordPacks
+            )
+        , viewCustomWordPackUpload theme language fileInputIdx
         ]
 
 
-filesDecoder : Decode.Decoder (List File.File)
-filesDecoder =
-    Decode.at [ "target", "files" ] (Decode.list File.decoder)
+viewWordPackInfo : List Int -> WordPackInfo -> List (Html Msg)
+viewWordPackInfo activeWordPacks wordPack =
+    let
+        deleteButton =
+            if wordPack.isDefault then
+                div [] []
+
+            else
+                button
+                    [ onClick (RemoveCustomWordPack wordPack.id)
+                    , class "w-9 h-8 px-2 py-1 bg-red-600 rounded justify-self-center self-center"
+                    , disabled wordPack.isDefault
+                    ]
+                    [ text "X" ]
+    in
+    [ input
+        [ type_ "checkbox"
+        , checked (isWordPackActive activeWordPacks wordPack)
+        , onClick (ToggleCustomWordPackActive wordPack.id)
+        , class "h-4 self-center"
+        ]
+        []
+    , span [] [ text wordPack.name ]
+    , deleteButton
+    ]
 
 
 isWordPackActive : List Int -> WordPackInfo -> Bool
@@ -1090,19 +1095,35 @@ isWordPackActive activeWordPacks wordPack =
             True
 
 
-viewWordPackInfo : ColorTheme -> List Int -> WordPackInfo -> Html Msg
-viewWordPackInfo theme activeWordPacks f =
-    div [ getTextColor theme ]
-        [ input [ type_ "checkbox", checked (isWordPackActive activeWordPacks f), onClick (ToggleCustomWordPackActive f.id) ] []
-        , text f.name
-        , button
-            [ onClick (RemoveCustomWordPack f.id)
-            , class "px-2 py-1 bg-red-600"
-            , getTextColor theme
-            , disabled f.isDefault
-            ]
-            [ text "X" ]
+viewCustomWordPackUpload : ColorTheme -> Translations.Language -> Int -> Html Msg
+viewCustomWordPackUpload theme language fileInputIdx =
+    let
+        invisibleTextColor =
+            case theme of
+                LightTheme ->
+                    class "text-gray-100"
+
+                DarkTheme ->
+                    class "text-gray-700"
+    in
+    Html.Keyed.node "div"
+        [ class "grid grid-cols-2 gap-4 pt-3" ]
+        [ ( "", div [ getTextColor theme, class "text-right" ] [ text (Translations.getSettingsUpload language) ] )
+        , ( "file-input" ++ String.fromInt fileInputIdx
+          , input
+                [ type_ "file"
+                , Html.Attributes.multiple True
+                , Html.Events.on "change" (Decode.map GotCustomWordFiles filesDecoder)
+                , invisibleTextColor
+                ]
+                []
+          )
         ]
+
+
+filesDecoder : Decode.Decoder (List File.File)
+filesDecoder =
+    Decode.at [ "target", "files" ] (Decode.list File.decoder)
 
 
 viewTitle : Translations.Language -> ColorTheme -> Html msg

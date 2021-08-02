@@ -242,3 +242,45 @@ getSettingsLanguage language =
 
         EN ->
             "Language"
+
+
+getSettingsWordPacks : Language -> String
+getSettingsWordPacks language =
+    case language of
+        DE ->
+            -- TODO find a better translation
+            "Wort Pakete"
+
+        EN ->
+            "Word Packs"
+
+
+getSettingsUpload : Language -> String
+getSettingsUpload language =
+    case language of
+        DE ->
+            -- TODO find a better translation
+            "Hochladen"
+
+        EN ->
+            "Upload"
+
+
+getSettingsWPActive : Language -> String
+getSettingsWPActive language =
+    case language of
+        DE ->
+            "Aktiv"
+
+        EN ->
+            "Active"
+
+
+getSettingsWPName : Language -> String
+getSettingsWPName language =
+    case language of
+        DE ->
+            "Name"
+
+        EN ->
+            "Name"
