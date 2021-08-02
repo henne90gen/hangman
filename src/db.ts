@@ -60,7 +60,7 @@ export default class HangmanDB extends Dexie {
                 return;
             }
 
-            this.wordPacks.bulkAdd([
+            await this.wordPacks.bulkAdd([
                 {
                     name: 'DE',
                     created: new Date(),

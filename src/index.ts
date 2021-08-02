@@ -112,7 +112,7 @@ async function downloadDefaultWordPackGroup(
     const content = await response.text();
     const words = content.split('\n');
     try {
-        await db.addWords(
+        db.addWords(
             words.map((w) => {
                 return { word: w, wordPackId: wordPack.id!!, index: 0 };
             }),
@@ -139,8 +139,16 @@ async function downloadDefaultWordPack(language: Language) {
         randomGroups.add(random(source.remoteGroups.length));
     }
 
+    let i = 0; // NOTE the first download is executed right away
     for (const groupIndex of randomGroups.values()) {
-        downloadDefaultWordPackGroup(wordPack, groupIndex);
+        if (i > 0) {
+            setTimeout(async () => {
+                await downloadDefaultWordPackGroup(wordPack, groupIndex);
+            }, 5000);
+        } else {
+            await downloadDefaultWordPackGroup(wordPack, groupIndex);
+        }
+        i++;
     }
 }
 
