@@ -5,6 +5,7 @@ import Color
 import File
 import Html exposing (Html, a, button, div, h1, input, label, option, select, span, table, tbody, td, text, th, thead, tr)
 import Html.Attributes exposing (checked, class, disabled, href, selected, target, type_, value)
+import Html.Attributes.Extra
 import Html.Events exposing (onClick)
 import Html.Events.Extra exposing (onChange)
 import Html.Keyed
@@ -756,7 +757,7 @@ view model =
     { title = Translations.getTitle language
     , body =
         [ div [ class "h-full", getBackgroundColor theme ]
-            [ viewSettingsButton theme model.isSettingsPanelOpen
+            [ viewSettingsButton theme language model.isSettingsPanelOpen
             , viewActivePage model
             ]
         ]
@@ -817,6 +818,8 @@ viewSettingsPage model =
             [ viewSettingsTitle theme language
             , viewColorThemeSelector theme language
             , viewLanguageSelector language theme
+
+            -- , viewResetButtons theme language
             , viewStatistics statistics language theme
             , viewWordPacks theme language model.settings.activeWordPacks wordPacks fileInputIdx
             ]
@@ -832,8 +835,8 @@ viewSettingsTitle theme language =
         [ text (Translations.getSettingsTitle language) ]
 
 
-viewSettingsButton : ColorTheme -> Bool -> Html Msg
-viewSettingsButton theme isSettingsPanelOpen =
+viewSettingsButton : ColorTheme -> Translations.Language -> Bool -> Html Msg
+viewSettingsButton theme language isSettingsPanelOpen =
     let
         buttonClasses =
             "absolute top-8 right-10"
@@ -850,6 +853,7 @@ viewSettingsButton theme isSettingsPanelOpen =
         button
             [ onClick ToggleSettingsPanel
             , class buttonClasses
+            , Debug.log "attribute" <| Html.Attributes.Extra.stringProperty "ariaLabel" (Translations.getSettingsButtonClose language)
             ]
             [ svg
                 [ TypedSvg.Attributes.width (px 32)
@@ -881,6 +885,7 @@ viewSettingsButton theme isSettingsPanelOpen =
         button
             [ onClick ToggleSettingsPanel
             , class buttonClasses
+            , Html.Attributes.Extra.stringProperty "ariaLabel" (Translations.getSettingsButtonOpen language)
             ]
             [ svg
                 [ TypedSvg.Attributes.width (px 32)
@@ -906,11 +911,10 @@ viewNewGameButton gameState language theme =
         _ ->
             div [ class "pt-2" ]
                 [ button
-                    ([ onClick NewGameButtonPressed
-                     , class "px-4 py-2 rounded"
-                     ]
-                        ++ getNewGameButtonColors theme
-                    )
+                    [ onClick NewGameButtonPressed
+                    , class "px-4 py-2 rounded"
+                    , getButtonColors
+                    ]
                     [ text (Translations.getNewGameText language) ]
                 ]
 
@@ -1035,6 +1039,21 @@ viewLanguageSelector language theme =
         ]
 
 
+viewResetButtons : ColorTheme -> Translations.Language -> Html Msg
+viewResetButtons theme language =
+    -- TODO translate this
+    div
+        [ class "px-5 py-4 shadow rounded-xl grid grid-cols-6 gap-3"
+        , getHighlightedBackgroundColor theme
+        , getTextColor theme
+        ]
+        [ div [ class "col-span-3 text-xl" ] [ text "Reset" ]
+        , button [ class "px-2 py-1 rounded", getButtonColors ] [ text "Settings" ]
+        , button [ class "px-2 py-1 rounded", getButtonColors ] [ text "Game Data" ]
+        , button [ class "px-2 py-1 rounded", getButtonColors ] [ text "Statistics" ]
+        ]
+
+
 viewWordPacks : ColorTheme -> Translations.Language -> List Int -> List WordPackInfo -> Int -> Html Msg
 viewWordPacks theme language activeWordPacks wordPacks fileInputIdx =
     div
@@ -1046,7 +1065,7 @@ viewWordPacks theme language activeWordPacks wordPacks fileInputIdx =
         , div [ class "pt-3 grid gap-2 grid-cols-3" ]
             ([ div [] [ text (Translations.getSettingsWPActive language) ]
              , div [] [ text (Translations.getSettingsWPName language) ]
-             , div [] [  ]
+             , div [] []
              ]
                 ++ List.concatMap (viewWordPackInfo activeWordPacks) wordPacks
             )
@@ -1594,18 +1613,9 @@ viewStatisticsLetterSeriesOverall statistics language =
 -- HELPER
 
 
-getNewGameButtonColors : ColorTheme -> List (Html.Attribute msg)
-getNewGameButtonColors theme =
-    case theme of
-        DarkTheme ->
-            [ class "text-white"
-            , class "bg-blue-700"
-            ]
-
-        LightTheme ->
-            [ class "text-white"
-            , class "bg-blue-700"
-            ]
+getButtonColors : Html.Attribute msg
+getButtonColors =
+    class "text-white, bg-blue-700"
 
 
 getLanguageSelectColor : ColorTheme -> List (Html.Attribute msg)

@@ -214,6 +214,26 @@ getStatisticsTableHeaderRatio language =
             ( "Ratio", "C/I" )
 
 
+getSettingsButtonOpen : Language -> String
+getSettingsButtonOpen language =
+    case language of
+        DE ->
+            "Einstellungen öffnen"
+
+        EN ->
+            "Open Settings"
+
+
+getSettingsButtonClose : Language -> String
+getSettingsButtonClose language =
+    case language of
+        DE ->
+            "Einstellungen schließen"
+
+        EN ->
+            "Close Settings"
+
+
 getSettingsTitle : Language -> String
 getSettingsTitle language =
     case language of
