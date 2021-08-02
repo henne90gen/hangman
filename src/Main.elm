@@ -104,6 +104,9 @@ type Msg
     | GotCustomWordContent String String
     | RemoveCustomWordPack Int
     | ToggleCustomWordPackActive Int
+    | ResetSettings
+    | ResetGameData
+    | ResetStatistics
 
 
 type alias SettingsFlags =
@@ -209,7 +212,7 @@ createInitialModel flags =
 
         settings =
             Maybe.withDefault
-                (defaultSettings flags)
+                (defaultSettings flags.wordPackInfos)
                 (Maybe.map convertSettingsFlags flags.settings)
     in
     { gameData = gameData
@@ -231,8 +234,8 @@ emptyGameData =
     }
 
 
-defaultSettings : Flags -> Settings
-defaultSettings flags =
+defaultSettings : List WordPackInfo -> Settings
+defaultSettings wordPackInfos =
     let
         language =
             Translations.defaultLanguage
@@ -240,8 +243,9 @@ defaultSettings flags =
     { language = language
     , theme = LightTheme
     , activeWordPacks =
-        flags.wordPackInfos
-            |> List.filter (\wp -> wp.isDefault && wp.name == Translations.languageToString language)
+        wordPackInfos
+            |> List.filter (\wp -> wp.isDefault)
+            |> List.filter (\wp -> wp.name == Translations.languageToString language)
             |> List.map .id
     }
 
@@ -375,6 +379,22 @@ update msg model =
                     toggleActiveWordPack model.settings id
             in
             ( { model | settings = newSettings }, saveSettings <| convertSettings <| newSettings )
+
+        ResetSettings ->
+            -- TODO also delete all custom word packs
+            let
+                newSettings =
+                    defaultSettings model.wordPacks
+            in
+            ( { model | settings = newSettings }
+            , newSettings |> convertSettings |> saveSettings
+            )
+
+        ResetGameData ->
+            ( { model | gameData = emptyGameData }, requestWord model.settings.activeWordPacks )
+
+        ResetStatistics ->
+            ( { model | statistics = emptyStatistics }, saveStatistics emptyStatistics )
 
 
 startNewGame : Model -> String -> Model
@@ -790,7 +810,7 @@ viewGamePage model =
         , viewWord gameData.shownWord gameData.gameState language theme
         , viewAlphabet gameData.gameState gameData.alphabet theme
         , viewGameOverText gameData.gameState language theme
-        , viewNewGameButton gameData.gameState language theme
+        , viewNewGameButton theme language gameData.gameState
         , viewHangman gameData.errorCounter theme
         ]
 
@@ -818,8 +838,7 @@ viewSettingsPage model =
             [ viewSettingsTitle theme language
             , viewColorThemeSelector theme language
             , viewLanguageSelector language theme
-
-            -- , viewResetButtons theme language
+            , viewResetButtons theme language
             , viewStatistics statistics language theme
             , viewWordPacks theme language model.settings.activeWordPacks wordPacks fileInputIdx
             ]
@@ -853,7 +872,7 @@ viewSettingsButton theme language isSettingsPanelOpen =
         button
             [ onClick ToggleSettingsPanel
             , class buttonClasses
-            , Debug.log "attribute" <| Html.Attributes.Extra.stringProperty "ariaLabel" (Translations.getSettingsButtonClose language)
+            , Html.Attributes.Extra.stringProperty "ariaLabel" (Translations.getSettingsButtonClose language)
             ]
             [ svg
                 [ TypedSvg.Attributes.width (px 32)
@@ -902,8 +921,8 @@ viewSettingsButton theme language isSettingsPanelOpen =
             ]
 
 
-viewNewGameButton : GameState -> Translations.Language -> ColorTheme -> Html Msg
-viewNewGameButton gameState language theme =
+viewNewGameButton : ColorTheme -> Translations.Language -> GameState -> Html Msg
+viewNewGameButton theme language gameState =
     case gameState of
         Playing ->
             div [] []
@@ -913,7 +932,8 @@ viewNewGameButton gameState language theme =
                 [ button
                     [ onClick NewGameButtonPressed
                     , class "px-4 py-2 rounded"
-                    , getButtonColors
+                    , getButtonColor theme
+                    , getTextColor theme
                     ]
                     [ text (Translations.getNewGameText language) ]
                 ]
@@ -1048,9 +1068,27 @@ viewResetButtons theme language =
         , getTextColor theme
         ]
         [ div [ class "col-span-3 text-xl" ] [ text "Reset" ]
-        , button [ class "px-2 py-1 rounded", getButtonColors ] [ text "Settings" ]
-        , button [ class "px-2 py-1 rounded", getButtonColors ] [ text "Game Data" ]
-        , button [ class "px-2 py-1 rounded", getButtonColors ] [ text "Statistics" ]
+        , button
+            [ class "px-2 py-1 rounded"
+            , getTextColor theme
+            , getButtonColor theme
+            , onClick ResetSettings
+            ]
+            [ text "Settings" ]
+        , button
+            [ class "px-2 py-1 rounded"
+            , getTextColor theme
+            , getButtonColor theme
+            , onClick ResetGameData
+            ]
+            [ text "Game Data" ]
+        , button
+            [ class "px-2 py-1 rounded"
+            , getTextColor theme
+            , getButtonColor theme
+            , onClick ResetStatistics
+            ]
+            [ text "Statistics" ]
         ]
 
 
@@ -1613,16 +1651,21 @@ viewStatisticsLetterSeriesOverall statistics language =
 -- HELPER
 
 
-getButtonColors : Html.Attribute msg
-getButtonColors =
-    class "text-white, bg-blue-700"
+getButtonColor : ColorTheme -> Html.Attribute msg
+getButtonColor theme =
+    case theme of
+        DarkTheme ->
+            class "bg-blue-700"
+
+        LightTheme ->
+            class "bg-gray-300"
 
 
 getLanguageSelectColor : ColorTheme -> List (Html.Attribute msg)
 getLanguageSelectColor theme =
     case theme of
         DarkTheme ->
-            [ class "bg-blue-800"
+            [ getButtonColor theme
             , getTextColor theme
             , class "border-blue-800"
             , class "focus:bg-blue-600"
@@ -1630,7 +1673,7 @@ getLanguageSelectColor theme =
             ]
 
         LightTheme ->
-            [ class "bg-gray-300"
+            [ getButtonColor theme
             , getTextColor theme
             , class "border-gray-300"
             , class "focus:border-gray-400"
