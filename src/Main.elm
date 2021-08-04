@@ -54,6 +54,7 @@ type ColorTheme
 type alias Settings =
     { language : Translations.Language
     , theme : ColorTheme
+    , playerCount : Int
     , activeWordPacks : List Int
     }
 
@@ -112,6 +113,7 @@ type Msg
 type alias SettingsFlags =
     { language : String
     , theme : String
+    , playerCount : Int
     , activeWordPacks : List Int
     }
 
@@ -242,6 +244,7 @@ defaultSettings wordPackInfos =
     in
     { language = language
     , theme = LightTheme
+    , playerCount = 1
     , activeWordPacks =
         wordPackInfos
             |> List.filter (\wp -> wp.isDefault)
@@ -1061,34 +1064,33 @@ viewLanguageSelector language theme =
 
 viewResetButtons : ColorTheme -> Translations.Language -> Html Msg
 viewResetButtons theme language =
-    -- TODO translate this
     div
         [ class "px-5 py-4 shadow rounded-xl grid grid-cols-6 gap-3"
         , getHighlightedBackgroundColor theme
         , getTextColor theme
         ]
-        [ div [ class "col-span-3 text-xl" ] [ text "Reset" ]
+        [ div [ class "col-span-3 text-xl" ] [ text <| Translations.getSettingsReset language ]
         , button
             [ class "px-2 py-1 rounded"
             , getTextColor theme
             , getButtonColor theme
             , onClick ResetSettings
             ]
-            [ text "Settings" ]
+            [ text <| Translations.getSettingsResetSettings language ]
         , button
             [ class "px-2 py-1 rounded"
             , getTextColor theme
             , getButtonColor theme
             , onClick ResetGameData
             ]
-            [ text "Game Data" ]
+            [ text <| Translations.getSettingsResetGameData language ]
         , button
             [ class "px-2 py-1 rounded"
             , getTextColor theme
             , getButtonColor theme
             , onClick ResetStatistics
             ]
-            [ text "Statistics" ]
+            [ text <| Translations.getSettingsResetStatistics language ]
         ]
 
 
@@ -1890,6 +1892,7 @@ convertSettings settings =
     in
     { language = convertedLanguage
     , theme = convertedTheme
+    , playerCount = settings.playerCount
     , activeWordPacks = settings.activeWordPacks
     }
 
@@ -1912,6 +1915,7 @@ convertSettingsFlags settingsFlags =
     in
     { language = convertedLanguage
     , theme = convertedTheme
+    , playerCount = settingsFlags.playerCount
     , activeWordPacks = settingsFlags.activeWordPacks
     }
 

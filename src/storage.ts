@@ -34,9 +34,18 @@ export function loadSettings(): Settings | null {
     if (storedSettings) {
         parsedSettings = JSON.parse(storedSettings);
     }
-    if (parsedSettings != null && !parsedSettings.hasOwnProperty('activeWordPacks')) {
+    if (parsedSettings === null) {
         return null;
     }
+
+    if (!parsedSettings.hasOwnProperty('activeWordPacks')) {
+        return null;
+    }
+    if (!parsedSettings.hasOwnProperty('playerCount')) {
+        parsedSettings.playerCount = 1;
+        return parsedSettings;
+    }
+
     return parsedSettings;
 }
 

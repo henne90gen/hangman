@@ -304,3 +304,43 @@ getSettingsWPName language =
 
         EN ->
             "Name"
+
+
+getSettingsReset : Language -> String
+getSettingsReset language =
+    case language of
+        DE ->
+            "Zurücksetzen"
+
+        EN ->
+            "Reset"
+
+
+getSettingsResetSettings : Language -> String
+getSettingsResetSettings language =
+    case language of
+        DE ->
+            "Einstellungen"
+
+        EN ->
+            "Settings"
+
+
+getSettingsResetGameData : Language -> String
+getSettingsResetGameData language =
+    case language of
+        DE ->
+            "Spieldaten"
+
+        EN ->
+            "Game Data"
+
+
+getSettingsResetStatistics : Language -> String
+getSettingsResetStatistics language =
+    case language of
+        DE ->
+            "Statistiken"
+
+        EN ->
+            "Statistics"
