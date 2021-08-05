@@ -45,6 +45,10 @@ export function loadSettings(): Settings | null {
         parsedSettings.playerCount = 1;
         return parsedSettings;
     }
+    if (!parsedSettings.hasOwnProperty('showWrongLetters')) {
+        parsedSettings.showWrongLetters = true;
+        return parsedSettings;
+    }
 
     return parsedSettings;
 }

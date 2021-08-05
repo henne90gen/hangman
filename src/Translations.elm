@@ -344,3 +344,23 @@ getSettingsResetStatistics language =
 
         EN ->
             "Statistics"
+
+
+getSettingsGame : Language -> String
+getSettingsGame language =
+    case language of
+        DE ->
+            "Spiel"
+
+        EN ->
+            "Game"
+
+
+getSettingsGameShowWrongLetters : Language -> String
+getSettingsGameShowWrongLetters language =
+    case language of
+        DE ->
+            "Falsche Buchstaben zeigen"
+
+        EN ->
+            "Show Wrong Letters"

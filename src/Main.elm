@@ -54,6 +54,7 @@ type ColorTheme
 type alias Settings =
     { language : Translations.Language
     , theme : ColorTheme
+    , showWrongLetters : Bool
     , playerCount : Int
     , activeWordPacks : List Int
     }
@@ -88,7 +89,6 @@ type alias Model =
     , fileInputIdx : Int -- NOTE this is a hack to clear the file input after uploading a file
     , wordPacks : List WordPackInfo
     , isSettingsPanelOpen : Bool
-    , useDefaultPack : Bool
     }
 
 
@@ -100,7 +100,7 @@ type Msg
     | GotWordPackInfos (List WordPackInfo)
     | ToggleDarkMode
     | ToggleSettingsPanel
-    | ToggleUseDefaultPack
+    | ToggleShowWrongLetters
     | GotCustomWordFiles (List File.File)
     | GotCustomWordContent String String
     | RemoveCustomWordPack Int
@@ -113,6 +113,7 @@ type Msg
 type alias SettingsFlags =
     { language : String
     , theme : String
+    , showWrongLetters : Bool
     , playerCount : Int
     , activeWordPacks : List Int
     }
@@ -223,7 +224,6 @@ createInitialModel flags =
     , wordPacks = flags.wordPackInfos
     , fileInputIdx = 0
     , isSettingsPanelOpen = False
-    , useDefaultPack = True
     }
 
 
@@ -244,6 +244,7 @@ defaultSettings wordPackInfos =
     in
     { language = language
     , theme = LightTheme
+    , showWrongLetters = True
     , playerCount = 1
     , activeWordPacks =
         wordPackInfos
@@ -357,8 +358,15 @@ update msg model =
         ToggleSettingsPanel ->
             ( { model | isSettingsPanelOpen = not model.isSettingsPanelOpen }, Cmd.none )
 
-        ToggleUseDefaultPack ->
-            ( { model | useDefaultPack = not model.useDefaultPack }, Cmd.none )
+        ToggleShowWrongLetters ->
+            let
+                oldSettings =
+                    model.settings
+
+                newSettings =
+                    { oldSettings | showWrongLetters = not oldSettings.showWrongLetters }
+            in
+            ( { model | settings = newSettings }, newSettings |> convertSettings |> saveSettings )
 
         GotCustomWordFiles files ->
             ( model
@@ -517,11 +525,14 @@ guessLetter model c =
 
         statistics =
             updateWordHighScores model.statistics gameState
+
+        newAlphabet =
+            guessLetterAlphabet gameData.alphabet c hasFoundLetter model.settings.showWrongLetters gameState
     in
     { model
         | gameData =
             { shownWord = newShownWord
-            , alphabet = guessLetterAlphabet gameData.alphabet c hasFoundLetter gameState
+            , alphabet = newAlphabet
             , errorCounter = newErrorCounter
             , gameState = gameState
             }
@@ -558,18 +569,18 @@ matchLetter matchChar letter =
             ( False, Shown c )
 
 
-guessLetterAlphabet : List AlphabetLetter -> Char -> Bool -> GameState -> List AlphabetLetter
-guessLetterAlphabet alphabet c hasFoundLetter gameState =
-    List.map (guessSingleLetterAlphabet c hasFoundLetter gameState) alphabet
+guessLetterAlphabet : List AlphabetLetter -> Char -> Bool -> Bool -> GameState -> List AlphabetLetter
+guessLetterAlphabet alphabet c hasFoundLetter showWrongLetters gameState =
+    List.map (guessSingleLetterAlphabet c hasFoundLetter showWrongLetters gameState) alphabet
 
 
-guessSingleLetterAlphabet : Char -> Bool -> GameState -> AlphabetLetter -> AlphabetLetter
-guessSingleLetterAlphabet c hasFoundLetter gameState letter =
+guessSingleLetterAlphabet : Char -> Bool -> Bool -> GameState -> AlphabetLetter -> AlphabetLetter
+guessSingleLetterAlphabet c hasFoundLetter showWrongLetters gameState letter =
     if isGameOver gameState then
         guessLetterGameOver letter
 
     else
-        guessLetterGameRunning c hasFoundLetter letter
+        guessLetterGameRunning c hasFoundLetter showWrongLetters letter
 
 
 guessLetterGameOver : AlphabetLetter -> AlphabetLetter
@@ -588,8 +599,8 @@ guessLetterGameOver letter =
             Disabled a
 
 
-guessLetterGameRunning : Char -> Bool -> AlphabetLetter -> AlphabetLetter
-guessLetterGameRunning c hasFoundLetter letter =
+guessLetterGameRunning : Char -> Bool -> Bool -> AlphabetLetter -> AlphabetLetter
+guessLetterGameRunning c hasFoundLetter showWrongLetters letter =
     case letter of
         CorrectlyUsed a ->
             CorrectlyUsed a
@@ -605,8 +616,11 @@ guessLetterGameRunning c hasFoundLetter letter =
                 if hasFoundLetter then
                     CorrectlyUsed a
 
-                else
+                else if showWrongLetters then
                     IncorrectlyUsed a
+
+                else
+                    Unused a
 
             else
                 Unused a
@@ -839,6 +853,7 @@ viewSettingsPage model =
     div [ class "flex justify-center", getBackgroundColor theme ]
         [ div [ class "grid gap-6 grid-cols-1 auto-rows-auto pb-3 px-3 md:px-0" ]
             [ viewSettingsTitle theme language
+            , viewGameSettings theme language model.settings
             , viewColorThemeSelector theme language
             , viewLanguageSelector language theme
             , viewResetButtons theme language
@@ -942,6 +957,18 @@ viewNewGameButton theme language gameState =
                 ]
 
 
+viewGameSettings : ColorTheme -> Translations.Language -> Settings -> Html Msg
+viewGameSettings theme language settings =
+    div
+        [ class "px-5 py-3 shadow rounded-xl grid grid-cols-2 gap-3"
+        , getHighlightedBackgroundColor theme
+        ]
+        [ div [ class "text-xl col-span-2", getTextColor theme ] [ text <| Translations.getSettingsGame language ]
+        , div [ getTextColor theme ] [ text <| Translations.getSettingsGameShowWrongLetters language ]
+        , div [] [ checkbox settings.showWrongLetters ToggleShowWrongLetters ]
+        ]
+
+
 viewColorThemeSelector : ColorTheme -> Translations.Language -> Html Msg
 viewColorThemeSelector theme language =
     let
@@ -961,11 +988,7 @@ viewColorThemeSelector theme language =
         , div
             [ class "flex-1 w-full flex items-center justify-center py-3" ]
             [ sunIcon theme
-            , label
-                [ class "switch" ]
-                [ input [ type_ "checkbox", checked isChecked, onClick ToggleDarkMode ] []
-                , span [ class "slider" ] []
-                ]
+            , checkbox isChecked ToggleDarkMode
             , moonIcon theme
             ]
         ]
@@ -1653,6 +1676,15 @@ viewStatisticsLetterSeriesOverall statistics language =
 -- HELPER
 
 
+checkbox : Bool -> msg -> Html msg
+checkbox isChecked msg =
+    label
+        [ class "switch" ]
+        [ input [ type_ "checkbox", checked isChecked, onClick msg ] []
+        , span [ class "slider" ] []
+        ]
+
+
 getButtonColor : ColorTheme -> Html.Attribute msg
 getButtonColor theme =
     case theme of
@@ -1892,6 +1924,7 @@ convertSettings settings =
     in
     { language = convertedLanguage
     , theme = convertedTheme
+    , showWrongLetters = settings.showWrongLetters
     , playerCount = settings.playerCount
     , activeWordPacks = settings.activeWordPacks
     }
@@ -1915,6 +1948,7 @@ convertSettingsFlags settingsFlags =
     in
     { language = convertedLanguage
     , theme = convertedTheme
+    , showWrongLetters = settingsFlags.showWrongLetters
     , playerCount = settingsFlags.playerCount
     , activeWordPacks = settingsFlags.activeWordPacks
     }
