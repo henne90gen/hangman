@@ -92,6 +92,11 @@ type alias Model =
     }
 
 
+type PlayerCountDirection
+    = PlayerCountDown
+    | PlayerCountUp
+
+
 type Msg
     = NewGameButtonPressed
     | GuessLetter Char
@@ -108,6 +113,7 @@ type Msg
     | ResetSettings
     | ResetGameData
     | ResetStatistics
+    | PlayerCountChanged PlayerCountDirection
 
 
 type alias SettingsFlags =
@@ -407,6 +413,15 @@ update msg model =
         ResetStatistics ->
             ( { model | statistics = emptyStatistics }, saveStatistics emptyStatistics )
 
+        PlayerCountChanged dir ->
+            let
+                newSettings =
+                    updatePlayerCount model.settings dir
+            in
+            ( { model | settings = newSettings }
+            , newSettings |> convertSettings |> saveSettings
+            )
+
 
 startNewGame : Model -> String -> Model
 startNewGame model newWord =
@@ -459,6 +474,27 @@ updateLanguage wordPacks settings language =
                     wpId :: filteredActiveWordPacks
     in
     { settings | language = language, activeWordPacks = newActiveWordPacks }
+
+
+updatePlayerCount : Settings -> PlayerCountDirection -> Settings
+updatePlayerCount settings dir =
+    let
+        newPlayerCount =
+            case dir of
+                PlayerCountDown ->
+                    settings.playerCount - 1
+
+                PlayerCountUp ->
+                    settings.playerCount + 1
+
+        newPlayerCountChecked =
+            if newPlayerCount < 1 || newPlayerCount > 6 then
+                settings.playerCount
+
+            else
+                newPlayerCount
+    in
+    { settings | playerCount = newPlayerCountChecked }
 
 
 toggleActiveWordPack : Settings -> Int -> Settings
@@ -527,7 +563,7 @@ guessLetter model c =
             updateWordHighScores model.statistics gameState
 
         newAlphabet =
-            guessLetterAlphabet gameData.alphabet c hasFoundLetter model.settings.showWrongLetters gameState
+            guessLetterAlphabet gameData.alphabet c hasFoundLetter gameState
     in
     { model
         | gameData =
@@ -569,18 +605,18 @@ matchLetter matchChar letter =
             ( False, Shown c )
 
 
-guessLetterAlphabet : List AlphabetLetter -> Char -> Bool -> Bool -> GameState -> List AlphabetLetter
-guessLetterAlphabet alphabet c hasFoundLetter showWrongLetters gameState =
-    List.map (guessSingleLetterAlphabet c hasFoundLetter showWrongLetters gameState) alphabet
+guessLetterAlphabet : List AlphabetLetter -> Char -> Bool -> GameState -> List AlphabetLetter
+guessLetterAlphabet alphabet c hasFoundLetter gameState =
+    List.map (guessSingleLetterAlphabet c hasFoundLetter gameState) alphabet
 
 
-guessSingleLetterAlphabet : Char -> Bool -> Bool -> GameState -> AlphabetLetter -> AlphabetLetter
-guessSingleLetterAlphabet c hasFoundLetter showWrongLetters gameState letter =
+guessSingleLetterAlphabet : Char -> Bool -> GameState -> AlphabetLetter -> AlphabetLetter
+guessSingleLetterAlphabet c hasFoundLetter gameState letter =
     if isGameOver gameState then
         guessLetterGameOver letter
 
     else
-        guessLetterGameRunning c hasFoundLetter showWrongLetters letter
+        guessLetterGameRunning c hasFoundLetter letter
 
 
 guessLetterGameOver : AlphabetLetter -> AlphabetLetter
@@ -599,8 +635,8 @@ guessLetterGameOver letter =
             Disabled a
 
 
-guessLetterGameRunning : Char -> Bool -> Bool -> AlphabetLetter -> AlphabetLetter
-guessLetterGameRunning c hasFoundLetter showWrongLetters letter =
+guessLetterGameRunning : Char -> Bool -> AlphabetLetter -> AlphabetLetter
+guessLetterGameRunning c hasFoundLetter letter =
     case letter of
         CorrectlyUsed a ->
             CorrectlyUsed a
@@ -616,11 +652,8 @@ guessLetterGameRunning c hasFoundLetter showWrongLetters letter =
                 if hasFoundLetter then
                     CorrectlyUsed a
 
-                else if showWrongLetters then
-                    IncorrectlyUsed a
-
                 else
-                    Unused a
+                    IncorrectlyUsed a
 
             else
                 Unused a
@@ -825,7 +858,7 @@ viewGamePage model =
     div [ getBackgroundColor theme ]
         [ viewTitle language theme
         , viewWord gameData.shownWord gameData.gameState language theme
-        , viewAlphabet gameData.gameState gameData.alphabet theme
+        , viewAlphabet gameData.gameState gameData.alphabet model.settings.showWrongLetters theme
         , viewGameOverText gameData.gameState language theme
         , viewNewGameButton theme language gameData.gameState
         , viewHangman gameData.errorCounter theme
@@ -966,6 +999,24 @@ viewGameSettings theme language settings =
         [ div [ class "text-xl col-span-2", getTextColor theme ] [ text <| Translations.getSettingsGame language ]
         , div [ getTextColor theme ] [ text <| Translations.getSettingsGameShowWrongLetters language ]
         , div [] [ checkbox settings.showWrongLetters ToggleShowWrongLetters ]
+        -- , div [ getTextColor theme ] [ text <| Translations.getSettingsGamePlayerCount language ]
+        -- , div [ class "grid grid-cols-3" ]
+        --     [ button
+        --         [ getTextColor theme
+        --         , getButtonColor theme
+        --         , class "justify-self-end rounded w-8 h-8"
+        --         , onClick (PlayerCountChanged PlayerCountDown)
+        --         ]
+        --         [ text "-" ]
+        --     , div [ getTextColor theme, class "self-center" ] [ text <| String.fromInt settings.playerCount ]
+        --     , button
+        --         [ getTextColor theme
+        --         , getButtonColor theme
+        --         , class "justify-self-start rounded w-8 h-8"
+        --         , onClick (PlayerCountChanged PlayerCountUp)
+        --         ]
+        --         [ text "+" ]
+        --     ]
         ]
 
 
@@ -1346,8 +1397,8 @@ getWikipediaLanguagePrefix language =
             "en"
 
 
-viewAlphabet : GameState -> List AlphabetLetter -> ColorTheme -> Html Msg
-viewAlphabet gameState alphabet theme =
+viewAlphabet : GameState -> List AlphabetLetter -> Bool -> ColorTheme -> Html Msg
+viewAlphabet gameState alphabet showWrongLetters theme =
     case gameState of
         Playing ->
             div
@@ -1360,18 +1411,18 @@ viewAlphabet gameState alphabet theme =
                 [ div
                     [ class "flex-1"
                     ]
-                    (List.map (viewAlphabetLetter theme) alphabet)
+                    (List.map (viewAlphabetLetter showWrongLetters theme) alphabet)
                 ]
 
         _ ->
             div [] []
 
 
-viewAlphabetLetter : ColorTheme -> AlphabetLetter -> Html Msg
-viewAlphabetLetter theme letter =
+viewAlphabetLetter : Bool -> ColorTheme -> AlphabetLetter -> Html Msg
+viewAlphabetLetter showWrongLetters theme letter =
     let
         ( classes, disabled_, c ) =
-            getClassesAndDisabledForAlphabetLetterButton letter theme
+            getClassesAndDisabledForAlphabetLetterButton letter showWrongLetters theme
     in
     button
         ([ onClick (GuessLetter c)
@@ -1714,8 +1765,9 @@ getLanguageSelectColor theme =
             ]
 
 
-getClassesAndDisabledForAlphabetLetterButton : AlphabetLetter -> ColorTheme -> ( List (Html.Attribute msg), Bool, Char )
-getClassesAndDisabledForAlphabetLetterButton letter theme =
+getClassesAndDisabledForAlphabetLetterButton : AlphabetLetter -> Bool -> ColorTheme -> ( List (Html.Attribute msg), Bool, Char )
+getClassesAndDisabledForAlphabetLetterButton letter showWrongLetters theme =
+    -- TODO implement showWrongLetters
     case theme of
         DarkTheme ->
             case letter of
@@ -1726,7 +1778,11 @@ getClassesAndDisabledForAlphabetLetterButton letter theme =
                     ( [ class "text-gray-200", class "bg-green-700", class "opacity-75", class "cursor-not-allowed" ], True, c )
 
                 IncorrectlyUsed c ->
-                    ( [ class "text-gray-200", class "bg-red-600", class "opacity-75", class "cursor-not-allowed" ], True, c )
+                    if showWrongLetters then
+                        ( [ class "text-gray-200", class "bg-red-600", class "opacity-75", class "cursor-not-allowed" ], True, c )
+
+                    else
+                        ( [ class "text-gray-200", class "bg-gray-600" ], False, c )
 
                 Disabled c ->
                     ( [ class "text-gray-200", class "bg-gray-700", class "opacity-50", class "cursor-not-allowed" ], True, c )
@@ -1740,7 +1796,11 @@ getClassesAndDisabledForAlphabetLetterButton letter theme =
                     ( [ class "bg-green-400", class "opacity-75", class "cursor-not-allowed" ], True, c )
 
                 IncorrectlyUsed c ->
-                    ( [ class "bg-red-500", class "opacity-75", class "cursor-not-allowed" ], True, c )
+                    if showWrongLetters then
+                        ( [ class "bg-red-500", class "opacity-75", class "cursor-not-allowed" ], True, c )
+
+                    else
+                        ( [ class "bg-gray-300" ], False, c )
 
                 Disabled c ->
                     ( [ class "bg-gray-300", class "opacity-50", class "cursor-not-allowed" ], True, c )

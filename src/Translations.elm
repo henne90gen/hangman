@@ -364,3 +364,13 @@ getSettingsGameShowWrongLetters language =
 
         EN ->
             "Show Wrong Letters"
+
+
+getSettingsGamePlayerCount : Language -> String
+getSettingsGamePlayerCount language =
+    case language of
+        DE ->
+            "Spieleranzahl"
+
+        EN ->
+            "Player Count"
