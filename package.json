@@ -15,7 +15,7 @@
         "@babel/preset-typescript": "7.14.5",
         "@types/jest": "27.0.3",
         "copy-webpack-plugin": "9.0.1",
-        "css-loader": "6.2.0",
+        "css-loader": "6.5.1",
         "css-minimizer-webpack-plugin": "3.0.2",
         "elm": "0.19.1-5",
         "elm-asset-webpack-loader": "1.1.3",
