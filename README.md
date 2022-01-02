@@ -9,6 +9,8 @@ A simple hangman game written in Elm.
 
 ## Local Development
 
+Install dependencies with `yarn install`
+
 Start the development server with `yarn start`
 
 Create a production build with `yarn build`
