@@ -24,3 +24,12 @@ jobs:
 
       - name: Upload Docker Image
         run: docker push henne90gen/hangman -a
+
+      # - name: Restart Deployment
+      #   env:
+      #     SSH_KEY: ${{secrets.SSH_KEY}}
+      #   run: |
+      #     echo "$SSH_KEY" > ssh.key
+      #     chmod 600 ssh.key
+      #     mkdir -p ~/.ssh && ssh-keyscan -H henne90gen.dynu.com > ~/.ssh/known_hosts
+      #     ssh -i ssh.key henne@henne90gen.dynu.com "kubectl rollout restart deployment/hangman-deployment"
