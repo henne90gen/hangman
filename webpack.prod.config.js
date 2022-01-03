@@ -7,8 +7,8 @@ const InterpolateHtmlPlugin = require('interpolate-html-plugin');
 const TerserPlugin = require('terser-webpack-plugin');
 const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
 
-const publicUrl = 'https://henne90gen.github.io/hangman';
-const publicPath = '/hangman/';
+const publicUrl = 'https://hangman.henne90gen.dynu.com';
+const publicPath = '/';
 const appHtml = './public/index.html';
 
 process.env.NODE_ENV = "production";
