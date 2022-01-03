@@ -1,26 +1,26 @@
 name: Build and Deploy
+
 on:
-    push:
-        branches:
-            - master
+  push:
+    branches:
+      - master
 
 jobs:
-    build-and-deploy:
-        runs-on: ubuntu-latest
-        steps:
-            - name: Checkout
-              uses: actions/checkout@v2
-              with:
-                  persist-credentials: false
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          persist-credentials: false
 
-            - name: Install and Build
-              run: |
-                  yarn install
-                  yarn test-ci
-                  yarn build
+      - name: Docker Login
+        env:
+          DOCKER_PASSWORD: ${{secrets.DOCKER_PASSWORD}}
+        run: docker login -u henne90gen -p $DOCKER_PASSWORD
 
-            - name: Deploy
-              uses: peaceiris/actions-gh-pages@v3
-              with:
-                  github_token: ${{ secrets.GITHUB_TOKEN }}
-                  publish_dir: ./dist
+      - name: Build
+        run: docker build . --tag henne90gen/hangman:latest
+
+      - name: Upload Docker Image
+        run: docker push henne90gen/hangman -a
