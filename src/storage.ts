@@ -34,7 +34,7 @@ export function loadSettings(): Settings | null {
     if (storedSettings) {
         parsedSettings = JSON.parse(storedSettings);
     }
-    if (parsedSettings === null) {
+    if (!parsedSettings) {
         return null;
     }
 
@@ -79,14 +79,24 @@ export function saveGameData(gameData: GameData) {
  */
 export function loadGameData(): GameData | null {
     const storedGameData = localStorage.getItem('gameData');
+    if (!storedGameData) {
+        return null;
+    }
+
+    const gameDataDecrypted = decrypt(storedGameData);
     let parsedGameData = null;
-    if (storedGameData) {
-        const gameDataDecrypted = decrypt(storedGameData);
-        try {
-            parsedGameData = JSON.parse(gameDataDecrypted);
-        } catch (error) {
-            console.warn('Could not load game data.', error);
-        }
+    try {
+        parsedGameData = JSON.parse(gameDataDecrypted);
+    } catch (error) {
+        console.warn('Could not load game data.', error);
+    }
+
+    if (parsedGameData === null) {
+        return null;
+    }
+
+    if (!parsedGameData.hasOwnProperty('currentPlayer')) {
+        parsedGameData.currentPlayer = 0;
     }
     return parsedGameData;
 }

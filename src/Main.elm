@@ -42,6 +42,7 @@ type alias GameData =
     { shownWord : List Letter
     , alphabet : List AlphabetLetter
     , errorCounter : Int
+    , currentPlayer : Int
     , gameState : GameState
     }
 
@@ -141,6 +142,7 @@ type alias GameDataFlags =
     { shownWord : List LetterFlags
     , alphabet : List AlphabetLetterFlags
     , errorCounter : Int
+    , currentPlayer : Int
     , gameState : String
     }
 
@@ -238,6 +240,7 @@ emptyGameData =
     { shownWord = []
     , alphabet = List.map Unused (String.toList alphabetString)
     , errorCounter = 0
+    , currentPlayer = 0
     , gameState = Playing
     }
 
@@ -419,7 +422,10 @@ update msg model =
                     updatePlayerCount model.settings dir
             in
             ( { model | settings = newSettings }
-            , newSettings |> convertSettings |> saveSettings
+            , Cmd.batch
+                [ newSettings |> convertSettings |> saveSettings
+                , requestWord model.settings.activeWordPacks
+                ]
             )
 
 
@@ -437,6 +443,7 @@ startNewGame model newWord =
             { shownWord = List.indexedMap (toLetter firstLetter) characters
             , alphabet = createAlphabet alphabetString firstLetter
             , errorCounter = 0
+            , currentPlayer = 0
             , gameState = Playing
             }
     }
@@ -553,6 +560,9 @@ guessLetter model c =
         ( hasFoundLetter, newShownWord ) =
             guessLetterShownWord gameData.shownWord c
 
+        newCurrentPlayer =
+            updateCurrentPlayer model.settings.playerCount gameData.currentPlayer
+
         newErrorCounter =
             updateErrorCounter gameData.errorCounter hasFoundLetter
 
@@ -569,6 +579,7 @@ guessLetter model c =
         | gameData =
             { shownWord = newShownWord
             , alphabet = newAlphabet
+            , currentPlayer = newCurrentPlayer
             , errorCounter = newErrorCounter
             , gameState = gameState
             }
@@ -603,6 +614,15 @@ matchLetter matchChar letter =
 
         Shown c ->
             ( False, Shown c )
+
+
+updateCurrentPlayer : Int -> Int -> Int
+updateCurrentPlayer playerCount currentPlayer =
+    if currentPlayer + 1 == playerCount then
+        0
+
+    else
+        currentPlayer + 1
 
 
 guessLetterAlphabet : List AlphabetLetter -> Char -> Bool -> GameState -> List AlphabetLetter
@@ -999,24 +1019,24 @@ viewGameSettings theme language settings =
         [ div [ class "text-xl col-span-2", getTextColor theme ] [ text <| Translations.getSettingsGame language ]
         , div [ getTextColor theme ] [ text <| Translations.getSettingsGameShowWrongLetters language ]
         , div [] [ checkbox settings.showWrongLetters ToggleShowWrongLetters ]
-        -- , div [ getTextColor theme ] [ text <| Translations.getSettingsGamePlayerCount language ]
-        -- , div [ class "grid grid-cols-3" ]
-        --     [ button
-        --         [ getTextColor theme
-        --         , getButtonColor theme
-        --         , class "justify-self-end rounded w-8 h-8"
-        --         , onClick (PlayerCountChanged PlayerCountDown)
-        --         ]
-        --         [ text "-" ]
-        --     , div [ getTextColor theme, class "self-center" ] [ text <| String.fromInt settings.playerCount ]
-        --     , button
-        --         [ getTextColor theme
-        --         , getButtonColor theme
-        --         , class "justify-self-start rounded w-8 h-8"
-        --         , onClick (PlayerCountChanged PlayerCountUp)
-        --         ]
-        --         [ text "+" ]
-        --     ]
+        , div [ getTextColor theme ] [ text <| Translations.getSettingsGamePlayerCount language ]
+        , div [ class "grid grid-cols-3" ]
+            [ button
+                [ getTextColor theme
+                , getButtonColor theme
+                , class "justify-self-end rounded w-8 h-8"
+                , onClick (PlayerCountChanged PlayerCountDown)
+                ]
+                [ text "-" ]
+            , div [ getTextColor theme, class "self-center" ] [ text <| String.fromInt settings.playerCount ]
+            , button
+                [ getTextColor theme
+                , getButtonColor theme
+                , class "justify-self-start rounded w-8 h-8"
+                , onClick (PlayerCountChanged PlayerCountUp)
+                ]
+                [ text "+" ]
+            ]
         ]
 
 
@@ -2037,6 +2057,7 @@ convertGameData gameData =
     { shownWord = convertedWord
     , alphabet = convertedAlphabet
     , errorCounter = gameData.errorCounter
+    , currentPlayer = gameData.currentPlayer
     , gameState = convertedGameState
     }
 
@@ -2092,6 +2113,7 @@ convertGameDataFlags flags =
     { shownWord = convertedWord
     , alphabet = convertedAlphabet
     , errorCounter = flags.errorCounter
+    , currentPlayer = flags.currentPlayer
     , gameState = convertedGameState
     }
 
