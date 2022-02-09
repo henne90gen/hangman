@@ -897,7 +897,7 @@ viewSettingsTitle : ColorTheme -> Translations.Language -> Html msg
 viewSettingsTitle theme language =
     h1
         [ getTextColor theme
-        , class "text-2xl pt-8 pb-5"
+        , class "text-2xl pt-8 pb-3"
         ]
         [ text (Translations.getSettingsTitle language) ]
 
