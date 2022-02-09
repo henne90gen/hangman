@@ -989,13 +989,22 @@ viewNewGameButton theme language gameState =
 
 viewGameSettings : ColorTheme -> Translations.Language -> Settings -> List WordPackInfo -> Int -> Html Msg
 viewGameSettings theme language settings wordPacks fileInputIdx =
+    let
+        dividerColor =
+            case theme of
+                DarkTheme ->
+                    "white"
+
+                LightTheme ->
+                    "black"
+    in
     div
-        [ class "px-5 pt-8 pb-5 shadow rounded-xl grid grid-cols-1 gap-5 items-center"
+        [ class "p-5 shadow rounded-xl grid grid-cols-1 gap-5 items-center"
         , getHighlightedBackgroundColor theme
         ]
-        [ div [ class "text-xl mb-5", getTextColor theme ] [ text <| Translations.getSettingsGame language ]
+        [ div [ class "text-xl mb-2", getTextColor theme ] [ text <| Translations.getSettingsGame language ]
         , viewShowWrongLetters theme language settings.showWrongLetters
-        , div [ style "height" "1px", style "background-color" "black", class "place-self-center w-2/3" ] []
+        , div [ style "height" "1px", style "background-color" dividerColor, class "place-self-center w-2/3" ] []
 
         -- , div [ getTextColor theme ] [ text <| Translations.getSettingsGamePlayerCount language ]
         -- , div [ class "grid grid-cols-3" ]
@@ -1016,7 +1025,7 @@ viewGameSettings theme language settings wordPacks fileInputIdx =
         --         [ text "+" ]
         --     ]
         , viewWordPacks theme language settings.activeWordPacks wordPacks fileInputIdx
-        , div [ style "height" "1px", style "background-color" "black", class "place-self-center w-2/3" ] []
+        , div [ style "height" "1px", style "background-color" dividerColor, class "place-self-center w-2/3" ] []
         , viewResetButtons theme language
         ]
 
@@ -1035,7 +1044,8 @@ viewGeneralSettings theme language =
         [ class "grid grid-cols-1 gap-3 px-5 py-4 shadow rounded-xl"
         , getHighlightedBackgroundColor theme
         ]
-        [ viewColorThemeSelector theme language
+        [ div [ class "text-xl mb-2", getTextColor theme ] [ text <| Translations.getSettingsGeneral language ]
+        , viewColorThemeSelector theme language
         , viewLanguageSelector theme language
         ]
 
@@ -1641,7 +1651,9 @@ viewStatistics statistics language theme =
         , getHighlightedBackgroundColor theme
         , getStatisticsTextColor theme
         ]
-        [ viewStatisticsPane statistics language ]
+        [ div [ getTextColor theme, class "text-xl mb-3" ] [ text <| Translations.getSettingsStatistics language ]
+        , viewStatisticsPane statistics language
+        ]
 
 
 viewStatisticsPane : Statistics -> Translations.Language -> Html msg

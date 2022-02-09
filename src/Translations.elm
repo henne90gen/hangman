@@ -374,3 +374,23 @@ getSettingsGamePlayerCount language =
 
         EN ->
             "Player Count"
+
+
+getSettingsGeneral : Language -> String
+getSettingsGeneral language =
+    case language of
+        DE ->
+            "Allgemein"
+
+        EN ->
+            "General"
+
+
+getSettingsStatistics : Language -> String
+getSettingsStatistics language =
+    case language of
+        DE ->
+            "Statistiken"
+
+        EN ->
+            "Statistics"
