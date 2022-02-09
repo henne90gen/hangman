@@ -4,7 +4,7 @@ import Browser
 import Color
 import File
 import Html exposing (Html, a, button, div, h1, input, label, option, select, span, table, tbody, td, text, th, thead, tr)
-import Html.Attributes exposing (checked, class, disabled, href, selected, target, type_, value)
+import Html.Attributes exposing (checked, class, disabled, href, selected, style, target, type_, value)
 import Html.Attributes.Extra
 import Html.Events exposing (onClick)
 import Html.Events.Extra exposing (onChange)
@@ -886,12 +886,9 @@ viewSettingsPage model =
     div [ class "flex justify-center", getBackgroundColor theme ]
         [ div [ class "grid gap-6 grid-cols-1 auto-rows-auto pb-3 px-3 md:px-0" ]
             [ viewSettingsTitle theme language
-            , viewGameSettings theme language model.settings
-            , viewColorThemeSelector theme language
-            , viewLanguageSelector language theme
-            , viewResetButtons theme language
+            , viewGameSettings theme language model.settings wordPacks fileInputIdx
+            , viewGeneralSettings theme language
             , viewStatistics statistics language theme
-            , viewWordPacks theme language model.settings.activeWordPacks wordPacks fileInputIdx
             ]
         ]
 
@@ -990,15 +987,16 @@ viewNewGameButton theme language gameState =
                 ]
 
 
-viewGameSettings : ColorTheme -> Translations.Language -> Settings -> Html Msg
-viewGameSettings theme language settings =
+viewGameSettings : ColorTheme -> Translations.Language -> Settings -> List WordPackInfo -> Int -> Html Msg
+viewGameSettings theme language settings wordPacks fileInputIdx =
     div
-        [ class "px-5 py-3 shadow rounded-xl grid grid-cols-2 gap-3"
+        [ class "px-5 pt-8 pb-5 shadow rounded-xl grid grid-cols-1 gap-5 items-center"
         , getHighlightedBackgroundColor theme
         ]
-        [ div [ class "text-xl col-span-2", getTextColor theme ] [ text <| Translations.getSettingsGame language ]
-        , div [ getTextColor theme ] [ text <| Translations.getSettingsGameShowWrongLetters language ]
-        , div [] [ checkbox settings.showWrongLetters ToggleShowWrongLetters ]
+        [ div [ class "text-xl mb-5", getTextColor theme ] [ text <| Translations.getSettingsGame language ]
+        , viewShowWrongLetters theme language settings.showWrongLetters
+        , div [ style "height" "1px", style "background-color" "black", class "place-self-center w-2/3" ] []
+
         -- , div [ getTextColor theme ] [ text <| Translations.getSettingsGamePlayerCount language ]
         -- , div [ class "grid grid-cols-3" ]
         --     [ button
@@ -1017,6 +1015,28 @@ viewGameSettings theme language settings =
         --         ]
         --         [ text "+" ]
         --     ]
+        , viewWordPacks theme language settings.activeWordPacks wordPacks fileInputIdx
+        , div [ style "height" "1px", style "background-color" "black", class "place-self-center w-2/3" ] []
+        , viewResetButtons theme language
+        ]
+
+
+viewShowWrongLetters : ColorTheme -> Translations.Language -> Bool -> Html Msg
+viewShowWrongLetters theme language showWrongLetters =
+    div [ class "grid grid-cols-2" ]
+        [ div [ getTextColor theme ] [ text <| Translations.getSettingsGameShowWrongLetters language ]
+        , div [] [ checkbox showWrongLetters ToggleShowWrongLetters ]
+        ]
+
+
+viewGeneralSettings : ColorTheme -> Translations.Language -> Html Msg
+viewGeneralSettings theme language =
+    div
+        [ class "grid grid-cols-1 gap-3 px-5 py-4 shadow rounded-xl"
+        , getHighlightedBackgroundColor theme
+        ]
+        [ viewColorThemeSelector theme language
+        , viewLanguageSelector theme language
         ]
 
 
@@ -1032,8 +1052,7 @@ viewColorThemeSelector theme language =
                     False
     in
     div
-        [ class "flex items-center justify-center px-5 py-3 shadow rounded-xl"
-        , getHighlightedBackgroundColor theme
+        [ class "flex items-center justify-center"
         ]
         [ div [ class "flex-1 text-xl", getTextColor theme ] [ text (Translations.getSettingsColorTheme language) ]
         , div
@@ -1114,10 +1133,10 @@ moonIcon theme =
         ]
 
 
-viewLanguageSelector : Translations.Language -> ColorTheme -> Html Msg
-viewLanguageSelector language theme =
+viewLanguageSelector : ColorTheme -> Translations.Language -> Html Msg
+viewLanguageSelector theme language =
     div
-        [ class "flex items-center justify-center px-5 py-3 shadow rounded-xl"
+        [ class "flex items-center justify-center"
         , getHighlightedBackgroundColor theme
         ]
         [ div [ class "flex-1 text-xl", getTextColor theme ] [ text (Translations.getSettingsLanguage language) ]
@@ -1139,11 +1158,11 @@ viewLanguageSelector language theme =
 viewResetButtons : ColorTheme -> Translations.Language -> Html Msg
 viewResetButtons theme language =
     div
-        [ class "px-5 py-4 shadow rounded-xl grid grid-cols-6 gap-3"
+        [ class "py-2 grid grid-cols-5 gap-3"
         , getHighlightedBackgroundColor theme
         , getTextColor theme
         ]
-        [ div [ class "col-span-3 text-xl" ] [ text <| Translations.getSettingsReset language ]
+        [ div [ class "col-span-2 text-xl place-self-center" ] [ text <| Translations.getSettingsReset language ]
         , button
             [ class "px-2 py-1 rounded"
             , getTextColor theme
@@ -1171,8 +1190,7 @@ viewResetButtons theme language =
 viewWordPacks : ColorTheme -> Translations.Language -> List Int -> List WordPackInfo -> Int -> Html Msg
 viewWordPacks theme language activeWordPacks wordPacks fileInputIdx =
     div
-        [ class "rounded-xl shadow p-5"
-        , getHighlightedBackgroundColor theme
+        [ class ""
         , getTextColor theme
         ]
         [ div [ getTextColor theme, class "text-xl" ] [ text (Translations.getSettingsWordPacks language) ]
