@@ -38,7 +38,7 @@
         "webpack-dev-server": "3.11.2"
     },
     "dependencies": {
-        "dexie": "3.0.3",
+        "dexie": "3.2.1",
         "tailwindcss": "2.2.7"
     },
     "resolutions": {
