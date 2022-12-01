@@ -27,7 +27,7 @@
         "jest": "27.4.5",
         "mini-css-extract-plugin": "2.4.5",
         "postcss": "8.4.5",
-        "postcss-loader": "6.1.1",
+        "postcss-loader": "7.0.2",
         "postcss-preset-env": "7.3.0",
         "style-loader": "3.2.1",
         "terser-webpack-plugin": "5.1.4",
